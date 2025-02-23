@@ -43,9 +43,11 @@
 
 ```bash
 # Clone this repository
-git clone https://github.com/NexusTeam/your-repo.git
+git clone https://github.com/NexusTeamOfficial/Blocks-System.git
 
-# Open the project in Android Studio
+# Navigate into the project directory
+cd Blocks-System
+
 ```
 
 ---
