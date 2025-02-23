@@ -28,6 +28,7 @@
 | Number Input Block | ✅ |
 | String Input Block | ✅ |
 | Boolean Input Block | ✅ |
+| Custom Block Code Support| ✅ |
 
 ---
 
