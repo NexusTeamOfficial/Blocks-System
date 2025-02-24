@@ -29,6 +29,9 @@
 | String Input Block | ✅ |
 | Boolean Input Block | ✅ |
 | Custom Block Code Support| ✅ |
+| Number Block| ⬜ |
+| Boolean Block| ⬜ |
+| String Block| ⬜ |
 
 ---
 
