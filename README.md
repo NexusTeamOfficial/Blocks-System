@@ -4,7 +4,6 @@
 
 ## 📸 Screenshot
 ![Custom Block UI](./screenshot.png)  
-*(Replace `screenshot.png` with your actual image file)*
 
 ---
 
@@ -32,7 +31,9 @@
 | Number Block| ⬜ |
 | Boolean Block| ⬜ |
 | String Block| ⬜ |
-
+| Save Blocks But After save and load block input removed| ✅ |
+| Block Input Save| ⬜ |
+| Not block input save but block code also saved| ⬜ |
 ---
 
 ## 🛠️ How It Works
