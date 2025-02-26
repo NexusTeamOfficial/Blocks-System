@@ -29,6 +29,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.TextView;
 import androidx.annotation.*;
 import androidx.appcompat.app.AppCompatActivity;
@@ -68,12 +69,15 @@ public class EditblockdataActivity extends AppCompatActivity {
 	private ArrayList<String> type = new ArrayList<>();
 	private ArrayList<HashMap<String, Object>> properties = new ArrayList<>();
 	
+	private ScrollView vscroll1;
+	private LinearLayout linear11;
 	private LinearLayout linear1;
 	private LinearLayout linears1;
 	private LinearLayout linears2;
 	private LinearLayout linear8;
 	private LinearLayout linear10;
 	private LinearLayout linear9;
+	private TextView textview7;
 	private TextView textview1;
 	private EditText name;
 	private LinearLayout linear3;
@@ -120,12 +124,15 @@ public class EditblockdataActivity extends AppCompatActivity {
 				onBackPressed();
 			}
 		});
+		vscroll1 = findViewById(R.id.vscroll1);
+		linear11 = findViewById(R.id.linear11);
 		linear1 = findViewById(R.id.linear1);
 		linears1 = findViewById(R.id.linears1);
 		linears2 = findViewById(R.id.linears2);
 		linear8 = findViewById(R.id.linear8);
 		linear10 = findViewById(R.id.linear10);
 		linear9 = findViewById(R.id.linear9);
+		textview7 = findViewById(R.id.textview7);
 		textview1 = findViewById(R.id.textview1);
 		name = findViewById(R.id.name);
 		linear3 = findViewById(R.id.linear3);
@@ -266,7 +273,8 @@ public class EditblockdataActivity extends AppCompatActivity {
         if (!(sourceCode.getText().toString().trim().isEmpty())) {
             map.put("code", sourceCode.getText().toString().trim());  // 🔥 User khud `%1$s`, `%2$s` set karega
         } else {
-            sourceCode.setError("Enter code correctly");
+            map.put("code", "");  // 🔥 User khud `%1$s`, `%2$s` set karega
+           // sourceCode.setError("Enter code correctly");
         }
 
         if (!(colouredit.getText().toString().trim().isEmpty())) {
@@ -340,7 +348,16 @@ public class EditblockdataActivity extends AppCompatActivity {
 											part2content.setVisibility(View.GONE);
 											block.setBackgroundResource(R.drawable.blockimg);
 										} else {
-											
+											if (typename.getText().toString().equals("variable")) {
+												colorcodeview.setVisibility(View.VISIBLE);
+												designtxt.setVisibility(View.VISIBLE);
+												parameterstxt.setVisibility(View.VISIBLE);
+												parameterscroll.setVisibility(View.VISIBLE);
+												part2content.setVisibility(View.GONE);
+												block.setBackgroundResource(R.drawable.var_block);
+											} else {
+												
+											}
 										}
 									}
 								}
@@ -354,8 +371,8 @@ public class EditblockdataActivity extends AppCompatActivity {
 			PickedColor = "FFAE00";
 			colouredit.setText("FFAE00");
 		}
-		type = new Gson().fromJson("[\"heading\",\"regular\",\"if\",\"if.e\"]", new TypeToken<ArrayList<String>>(){}.getType());
-		properties = new Gson().fromJson("[{\"name\":\"editSstring\",\"value\":\"%e.s\"},\n {\"name\":\"editNumber\",\"value\":\"%e.n\"},\n {\"name\":\"Boolen\",\"value\":\"%v.b\"}\n]", new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
+		type = new Gson().fromJson("[\"heading\",\"regular\",\"if\",\"if.e\",\"variable\"]", new TypeToken<ArrayList<String>>(){}.getType());
+		properties = new Gson().fromJson("[{\"name\":\"editSstring\",\"value\":\"%e.s\"},\n {\"name\":\"editNumber\",\"value\":\"%e.n\"},\n {\"name\":\"Boolen\",\"value\":\"%v.b\"},\n {\"name\":\"visibility\",\"value\":\"%v.visibility\"},\n {\"name\":\"drawable\",\"value\":\"%d.drawable\"},\n {\"name\":\"Transcript Mode\",\"value\":\"%l.transcriptmode\"},\n {\"name\":\"font\",\"value\":\"%v.font\"},\n {\"name\":\"typeface\",\"value\":\"%v.typeface\"},\n {\"name\":\"view\",\"value\":\"%v.view\"}              \n]", new TypeToken<ArrayList<HashMap<String, Object>>>(){}.getType());
 		for(int _repeat14 = 0; _repeat14 < (int)(properties.size()); _repeat14++) {
 			((ViewGroup)contentlist).addView(new TextView(EditblockdataActivity.this),(int)_repeat14);
 			TextView txt = ((TextView) contentlist.getChildAt((int) _repeat14));
@@ -484,7 +501,16 @@ public class EditblockdataActivity extends AppCompatActivity {
 										part2content.setVisibility(View.GONE);
 										block.setBackgroundResource(R.drawable.blockimg);
 									} else {
-										
+										if (checkBoxs.getText().toString().equals("variable")) {
+											colorcodeview.setVisibility(View.VISIBLE);
+											designtxt.setVisibility(View.VISIBLE);
+											parameterstxt.setVisibility(View.VISIBLE);
+											parameterscroll.setVisibility(View.VISIBLE);
+											part2content.setVisibility(View.GONE);
+											block.setBackgroundResource(R.drawable.var_block);
+										} else {
+											
+										}
 									}
 								}
 							}

@@ -77,7 +77,9 @@ import android.widget.ScrollView;
 import android.widget.Toast;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.List;;
+import java.util.List;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;;
 
 public class MainActivity extends AppCompatActivity {
 	
@@ -94,6 +96,8 @@ public class MainActivity extends AppCompatActivity {
 	private boolean toogle = false;
 	public Map<String, Object> map = new HashMap<>();
 	private Map<View, Map<String, String>> blockValues = new HashMap<>();
+	String EVENT_NAME = "onCreate";
+	Helper<String> Helper;
 	
 	private ArrayList<String> liststring = new ArrayList<>();
 	private ArrayList<HashMap<String, Object>> list = new ArrayList<>();
@@ -102,20 +106,23 @@ public class MainActivity extends AppCompatActivity {
 	private LinearLayout linear2;
 	private FloatingActionButton floating_action_button1;
 	private LinearLayout linear8;
+	private TextView copyRightFinal;
 	private LinearLayout linear1;
 	private LinearLayout shadow;
 	private LinearLayout linear7;
 	private TextView textview1;
-	private Button button2;
-	private Button button1;
+	private Button save;
+	private Button sourceCode;
+	private Button load;
 	private ImageView delete;
-	private Button button3;
 	private ScrollView vscroll2;
 	private HorizontalScrollView hscroll1;
 	private LinearLayout main;
 	private LinearLayout linear13;
 	private ScrollView vscroll3;
 	private LinearLayout linear10;
+	private LinearLayout linear14;
+	private HorizontalScrollView hscroll3;
 	private LinearLayout blockarea;
 	private ListView listview1;
 	
@@ -150,20 +157,23 @@ public class MainActivity extends AppCompatActivity {
 		linear2 = findViewById(R.id.linear2);
 		floating_action_button1 = findViewById(R.id.floating_action_button1);
 		linear8 = findViewById(R.id.linear8);
+		copyRightFinal = findViewById(R.id.copyRightFinal);
 		linear1 = findViewById(R.id.linear1);
 		shadow = findViewById(R.id.shadow);
 		linear7 = findViewById(R.id.linear7);
 		textview1 = findViewById(R.id.textview1);
-		button2 = findViewById(R.id.button2);
-		button1 = findViewById(R.id.button1);
+		save = findViewById(R.id.save);
+		sourceCode = findViewById(R.id.sourceCode);
+		load = findViewById(R.id.load);
 		delete = findViewById(R.id.delete);
-		button3 = findViewById(R.id.button3);
 		vscroll2 = findViewById(R.id.vscroll2);
 		hscroll1 = findViewById(R.id.hscroll1);
 		main = findViewById(R.id.main);
 		linear13 = findViewById(R.id.linear13);
 		vscroll3 = findViewById(R.id.vscroll3);
 		linear10 = findViewById(R.id.linear10);
+		linear14 = findViewById(R.id.linear14);
+		hscroll3 = findViewById(R.id.hscroll3);
 		blockarea = findViewById(R.id.blockarea);
 		listview1 = findViewById(R.id.listview1);
 		s = getSharedPreferences("s", Activity.MODE_PRIVATE);
@@ -182,17 +192,24 @@ public class MainActivity extends AppCompatActivity {
 			}
 		});
 		
-		button2.setOnClickListener(new View.OnClickListener() {
+		save.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
-				saveBlocks();
+				saveLogic();
 			}
 		});
 		
-		button1.setOnClickListener(new View.OnClickListener() {
+		sourceCode.setOnClickListener(new View.OnClickListener() {
 			@Override
 			public void onClick(View _view) {
 				showSourceCodeDialog();
+			}
+		});
+		
+		load.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View _view) {
+				loadLogic(/*EVENT_NAME*/);
 			}
 		});
 		
@@ -200,13 +217,6 @@ public class MainActivity extends AppCompatActivity {
 			@Override
 			public void onClick(View _view) {
 				
-			}
-		});
-		
-		button3.setOnClickListener(new View.OnClickListener() {
-			@Override
-			public void onClick(View _view) {
-				loadBlocks();
 			}
 		});
 		
@@ -236,10 +246,13 @@ public class MainActivity extends AppCompatActivity {
 		linear5.setTag("");
 		linear1.getBackground().setColorFilter(0xFFE65100, PorterDuff.Mode.MULTIPLY);
 		shadow.getBackground().setColorFilter(0xFF000000, PorterDuff.Mode.MULTIPLY);
+		Helper = new Helper<>();
+		linear8.setVisibility(View.GONE);
 		((ViewGroup)shadow.getParent()).removeView(shadow);
 		delete.setOnDragListener(new delete());
 		listview1.setAdapter(new ArrayAdapter<String>(getBaseContext(), android.R.layout.simple_list_item_1, liststring));
 		((BaseAdapter)listview1.getAdapter()).notifyDataSetChanged();
+		textview1.setText(EVENT_NAME);
 		_refrieshlist();
 	}
 	
@@ -248,20 +261,15 @@ public class MainActivity extends AppCompatActivity {
 	public void onBackPressed() {
 		if (toogle) { 
 			    toogle = false;
-			    linear8.setVisibility(View.GONE);
+			    linear8.setVisibility(View.GONE); // Directly GONE kar diya
 			
-			    // Thoda delay add karte hain taaki GONE hone ke baad dialog dikhe
-			    new Handler().postDelayed(new Runnable() {
-				        @Override
-				        public void run() {
-					            showExitDialog();
-					        }
-				    }, 100); // 100ms delay
-			
+			    // Directly dialog dikha rahe hain, koi delay nahi
+			    showExitDialog();
 		} else {
 			    toogle = true;
 			    showExitDialog();
 		}
+		
 	}
 	private void showExitDialog() {
 		    AlertDialog.Builder dilo = new AlertDialog.Builder(this);
@@ -287,6 +295,63 @@ public class MainActivity extends AppCompatActivity {
 		    dilo.create().show();
 	}
 	{
+	}
+	
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) {
+		//@Override
+		//public boolean onCreateOptionsMenu(Menu menu) {
+		    getMenuInflater().inflate(R.menu.main_menu, menu);
+		    
+		    // Change color of icons based on undo/redo availability
+		    MenuItem undoItem = menu.findItem(R.id.action_undo);
+		    MenuItem redoItem = menu.findItem(R.id.action_redo);
+		
+		    if (undoItem != null) {
+			        Drawable undoIcon = undoItem.getIcon();
+			        if (undoIcon != null) {
+				            undoIcon.setColorFilter(undoStack.isEmpty() ? Color.GRAY : Color.BLACK, PorterDuff.Mode.SRC_IN);
+				            undoItem.setIcon(undoIcon);
+				        }
+			    }
+		
+		    if (redoItem != null) {
+			        Drawable redoIcon = redoItem.getIcon();
+			        if (redoIcon != null) {
+				            redoIcon.setColorFilter(redoStack.isEmpty() ? Color.GRAY : Color.BLACK, PorterDuff.Mode.SRC_IN);
+				            redoItem.setIcon(redoIcon);
+				        }
+			    }
+		
+		    //return true;
+		//}
+		
+		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		final int _id = item.getItemId();
+		final String _title = (String) item.getTitle();
+		//@Override
+		//public boolean onOptionsItemSelected(MenuItem item) {
+		    switch (item.getItemId()) {
+			        case R.id.action_undo:
+			            undo();
+			            invalidateOptionsMenu(); // Refresh menu
+			            return true;
+			
+			        case R.id.action_redo:
+			            redo();
+			            invalidateOptionsMenu(); // Refresh menu
+			            return true;
+			
+			        default:
+			           // return super.onOptionsItemSelected(item);
+			    }
+		//}
+		
+		return super.onOptionsItemSelected(item);
 	}
 	public void _regular() {
 	}
@@ -615,80 +680,97 @@ this.getBackground().setColorFilter(0xFF2195F3, PorterDuff.Mode.MULTIPLY);
 		}
 	};
 	{
-		protected class if_droptop implements View.OnDragListener {
-			    public boolean onDrag(final View v, final DragEvent event) {
-				        final int action = event.getAction();
-				        final View DV = (View) event.getLocalState();
-				
-				        if (DV == null) return false; // Prevent null pointer crash
-				
-				        switch (action) {
-					            case DragEvent.ACTION_DRAG_STARTED:
-					                DV.setVisibility(View.GONE);
-					                return true;
-					
-					            case DragEvent.ACTION_DRAG_ENTERED:
-					                v.invalidate();
-					                return true;
-					
-					            case DragEvent.ACTION_DRAG_LOCATION:
-					                try {
-						                    if (v.getTag() instanceof if_block) {
-							                        if_block block = (if_block) v.getTag();
-							                        LinearLayout center = block.center;
-							
-							                        // Remove shadow from previous parent safely
-							                        if (shadow.getParent() instanceof ViewGroup) {
-								                            ((ViewGroup) shadow.getParent()).removeView(shadow);
-								                        }
-							
-							                        // Add shadow at the first position
-							                        ((ViewGroup) center).addView(shadow, 0);
-							
-							                        // Remove dragged view from its previous parent safely
-							                        if (DV.getParent() instanceof ViewGroup) {
-								                            ((ViewGroup) DV.getParent()).removeView(DV);
-								                        }
-							
-							                        // Add the dragged view at the first position
-							                        ((ViewGroup) center).addView(DV, 0);
-							                    }
-						                } catch (Exception e) {
-						                    Log.e("DragError", "Error during drag: ", e);
-						                }
-					                return true;
-					
-					            case DragEvent.ACTION_DRAG_EXITED:
-					                v.invalidate();
-					                return true;
-					
-					            case DragEvent.ACTION_DROP:
-					                v.invalidate();
-					                return true;
-					
-					            case DragEvent.ACTION_DRAG_ENDED:
-					                v.invalidate();
-					
-					                new Handler().postDelayed(() -> {
-						                    try {
-							                        if (shadow.getParent() instanceof ViewGroup) {
-								                            ((ViewGroup) shadow.getParent()).removeView(shadow);
-								                        }
-							                        DV.setVisibility(View.VISIBLE);
-							                    } catch (Exception e) {
-							                        Log.e("DragError", "Error restoring visibility: ", e);
-							                    }
-						                }, 5); // Small delay to ensure UI updates properly
-					
-					                _refrieshlist();
-					                return true;
-					
-					            default:
-					                break;
-					        }
-				        return false;
-				    }
+	}
+	protected class if_droptop implements View.OnDragListener {
+		public boolean onDrag(final View v,final DragEvent event) {
+			final int action = event.getAction();
+			final View DV = ((View) event.getLocalState());
+			switch(action) {
+				case DragEvent.ACTION_DRAG_STARTED:
+				DV.setVisibility(View.GONE);
+				return true;
+				case DragEvent.ACTION_DRAG_ENTERED:
+				 
+				v.invalidate();
+				return true;
+				case DragEvent.ACTION_DRAG_LOCATION:
+				//drag started
+				try{
+					if (!((LinearLayout)((View) (v.getTag())).getParent()).getTag().toString().equals("blocks")) {
+						if_block block = (if_block) v.getTag();
+						LinearLayout center = block.center;
+						try {
+								((ViewGroup)shadow.getParent()).removeView(shadow);
+						} catch (Exception exp65676) {
+								 
+						}
+						((ViewGroup) ((ViewGroup) center)).addView(shadow,(int)(0));
+						try {
+								((ViewGroup)DV.getParent()).removeView(DV);
+						} catch (Exception exp65676) {
+								 
+						}
+						((ViewGroup) ((ViewGroup) center)).addView(DV,(int)(0));
+					}
+				}catch(Exception e){
+					try{
+						if_block block = (if_block) v.getTag();
+						LinearLayout center = block.center;
+						try {
+								((ViewGroup)shadow.getParent()).removeView(shadow);
+						} catch (Exception exp65676) {
+								 
+						}
+						((ViewGroup) ((ViewGroup) center)).addView(shadow,(int)(0));
+						try {
+								((ViewGroup)DV.getParent()).removeView(DV);
+						} catch (Exception exp65676) {
+								 
+						}
+						((ViewGroup) ((ViewGroup) center)).addView(DV,(int)(0));
+					} catch (Exception exp101) {
+					}
+				}
+				return true;
+				case DragEvent.ACTION_DRAG_EXITED:
+				 
+				v.invalidate();
+				return true;
+				case DragEvent.ACTION_DROP:
+				//drop
+				 
+				v.invalidate();
+				return true;
+				case DragEvent.ACTION_DRAG_ENDED:
+				v.invalidate();
+				final
+				View dr = DV;
+				t = new TimerTask() {
+					@Override
+					public void run() {
+						runOnUiThread(new Runnable() {
+							@Override
+							public void run() {
+								try{
+									((ViewGroup)shadow.getParent()).removeView(shadow);
+								}catch(Exception e){
+									 
+								}
+								dr.setVisibility(View.VISIBLE);
+							}
+						});
+					}
+				};
+				_timer.schedule(t, (int)(5));
+				_refrieshlist();
+				return true;
+				default:
+				break;
+			}
+			return false;
 		}
+	};
+	{
 	}
 	protected class if_droptop2 implements View.OnDragListener {
 		public boolean onDrag(final View v,final DragEvent event) {
@@ -1059,7 +1141,15 @@ this.getBackground().setColorFilter(0xFF2195F3, PorterDuff.Mode.MULTIPLY);
 		}
 		
 		final String placeholder = (String) _view.getTag();
-		edit.setText(((TextView) _view).getText().toString());
+		
+		String currentText = ((TextView) _view).getText().toString();
+		String placeholderz = _view.getContentDescription().toString();
+		//edit.setText(((TextView) _view).getText().toString());
+		if (currentText.equals(placeholder)) {
+			        edit.setText("");
+			    } else {
+			        edit.setText(currentText);
+			    }
 		dialog1.show();
 		
 		save.setOnClickListener(new View.OnClickListener() {
@@ -1085,6 +1175,13 @@ this.getBackground().setColorFilter(0xFF2195F3, PorterDuff.Mode.MULTIPLY);
 						
 						                // ✅ Update TextView
 						                ((TextView) _view).setText(newValue);
+						                try {
+							               // _view.setTag(R.id.main, newValue);
+							               }catch(Exception e){
+							 
+							               }
+						               
+						               saveLogic();
 						
 						                // ✅ Update block code properly
 						                if (parentBlock.getTag() != null) {
@@ -1144,105 +1241,179 @@ this.getBackground().setColorFilter(0xFF2195F3, PorterDuff.Mode.MULTIPLY);
 	
 	
 	public void _refrieshlist() {
-		
-		t = new TimerTask() {
-			    @Override
-			    public void run() {
-				        runOnUiThread(new Runnable() {
-					            @Override
-					            public void run() {
-						                dataMap = gson.fromJson(s.getString("data", ""), type);
-						                List<Map<String, String>> dataMapList = dataMap.get(liststring.get((int) n));
-						                list = new ArrayList<>();
-						
-						                for (Map<String, String> map : dataMapList) {
-							                    HashMap<String, Object> hashMap = new HashMap<>();
-							                    for (String key : map.keySet()) {
-								                        String value = map.get(key);
-								                        hashMap.put(key, value);
-								                    }
-							                    list.add(hashMap);
-							                }
-						
-						                blockarea.removeAllViews();
-						
-						                for (int _repeat61 = 0; _repeat61 < list.size(); _repeat61++) {
-							                    String type = list.get(_repeat61).get("type").toString();
-							                    String content = list.get(_repeat61).get("content").toString();
-							                    String blockCode = list.get(_repeat61).get("code").toString(); // ✅ Get block "code"
+		//private void _refrieshlist() {
+		    t = new TimerTask() {
+			        @Override
+			        public void run() {
+				            runOnUiThread(new Runnable() {
+					                @Override
+					                public void run() {
+						                    try {
+							                        if (s.contains("data")) {
+								                            dataMap = gson.fromJson(s.getString("data", ""), type);
+								                            if (dataMap == null || !dataMap.containsKey(liststring.get((int) n))) {
+									                                Log.e("Error", "No data found for the selected index");
+									                                return;
+									                            }
+								                        } else {
+								                            Log.e("Error", "SharedPreferences 'data' key missing!");
+								                            return;
+								                        }
 							
-							                    if (type.equals("heading")) {
-								                        TextView txt = new TextView(MainActivity.this);
-								                        txt.setText(content);
-								                        txt.setBackgroundColor(0xFF212121);
-								                        txt.setTextColor(0xFFFFFFFF);
-								                        blockarea.addView(txt);
-								
-								                    } else if (type.equals("regular")) {
-								                        regular r = new regular(MainActivity.this);
-								                        blockarea.addView(r);
-								                        _addViewsTo(r, content, blockCode); // ✅ Pass blockCode
-								
-								                        try {
-									                            String colours = "#" + list.get(_repeat61).get("colour").toString();
-									                            int colour = Color.parseColor(colours);
-									                            r.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            r.invalidate();
-									                        } catch (Exception e) { }
-								                        
-								                    } else if (type.equals("if")) {
-								                        if_block ifb = new if_block(MainActivity.this);
-								                        blockarea.addView(ifb);
-								                        _addViewsTo(ifb.top, content, blockCode); // ✅ Pass blockCode
-								
-								                        try {
-									                            String colours = "#" + list.get(_repeat61).get("colour").toString();
-									                            int colour = Color.parseColor(colours);
-									                            ifb.top.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.center.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.bottom.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+							                        List<Map<String, String>> dataMapList = dataMap.get(liststring.get((int) n));
+							                        if (dataMapList == null) return;
+							
+							                        list = new ArrayList<>();
+							                        for (Map<String, String> map : dataMapList) {
+								                            HashMap<String, Object> hashMap = new HashMap<>();
+								                            for (String key : map.keySet()) {
+									                                String value = map.get(key);
+									                                hashMap.put(key, value);
+									                            }
+								                            list.add(hashMap);
+								                        }
+							
+							                        blockarea.removeAllViews();
+							                        blockContentMap.clear(); 
+							                        
+							                        List<String> allContents = new ArrayList<>();
+							
+							                        for (int i = 0; i < list.size(); i++) {
+								                            String type = list.get(i).get("type").toString();
+								                            String content = list.get(i).get("content").toString();
+								                            String blockCode = list.get(i).containsKey("code") ? list.get(i).get("code").toString() : "";
+								                            String colorCode = list.get(i).containsKey("colour") ? list.get(i).get("colour").toString() : "";
+								                            
+								                            Map<String, String> contentDataxy = new HashMap<>();
+								                            contentDataxy.put("content", content);
+								                           // contentData.put("blockCode", blockCode);
+								                           contentDataxy.put("color", colorCode);
+								                           String jsonTag1 = gson.toJson(contentDataxy);
+								                           Helper.setKey(R.id.main, jsonTag1);
+								                            
+								                            if (type.equals("heading")) {
+									                                TextView txt = new TextView(MainActivity.this);
+									                                txt.setText(content);
+									                                txt.setBackgroundColor(0xFF212121);
+									                                txt.setTextColor(0xFFFFFFFF);
+									                                blockarea.addView(txt);
 									
-									                            ifb.top.invalidate();
-									                            ifb.center.invalidate();
-									                            ifb.bottom.invalidate();
-									                        } catch (Exception e) { }
-								
-								                    } else if (type.equals("if.e")) {
-								                        if_block ifb = new if_block(MainActivity.this);
-								                        blockarea.addView(ifb);
-								                        _addViewsTo(ifb.top, content, blockCode); // ✅ Pass blockCode
-								
-								                        if (list.get(_repeat61).get("content2") != null) {
-									                            _addViewsTo(ifb.middle, list.get(_repeat61).get("content2").toString(), blockCode);
-									                        } else {
-									                            _addViewsTo(ifb.middle, " ", blockCode);
-									                        }
-								
-								                        ifb.middle.setVisibility(View.VISIBLE);
-								                        ifb.center2.setVisibility(View.VISIBLE);
-								
-								                        try {
-									                            String colours = "#" + list.get(_repeat61).get("colour").toString();
-									                            int colour = Color.parseColor(colours);
-									                            ifb.top.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.center.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.bottom.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.center2.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
-									                            ifb.middle.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+									                            } else if (type.equals("regular")) {
+									                                regular r = new regular(MainActivity.this);
+									                                blockarea.addView(r);
+									                                Map<String, String> contentDataq = new HashMap<>();
+									                                    contentDataq.put("content", content);
+									                                   // contentData.put("blockCode", blockCode);
+									                                    contentDataq.put("color", colorCode);
 									
-									                            ifb.top.invalidate();
-									                            ifb.center.invalidate();
-									                            ifb.bottom.invalidate();
-									                            ifb.center2.invalidate();
-									                            ifb.middle.invalidate();
-									                        } catch (Exception e) { }
-								                    }
-							                }
-						            }
-					        });
-				    }
-		};
-		_timer.schedule(t, 50);
+									                                    String jsonTag = gson.toJson(contentDataq);
+									                                    r.setTag(R.id.main, jsonTag);  // ✅ Safe tag setting
+									                               // r.setTag(R.id.main + 1, "#" + colorCode);
+									                                _addViewsTo(r, content, blockCode, "");
+									
+									                                try {
+										                                    int colour = Color.parseColor("#" + list.get(i).get("colour").toString());
+										                                    r.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    r.invalidate();
+										                                } catch (Exception e) {
+										                                    Log.e("ColorError", "Error applying color", e);
+										                                }
+									
+									                            } else if (type.equals("if")) {
+									                                if_block ifb = new if_block(MainActivity.this);
+									                                blockarea.addView(ifb);
+									                                Map<String, String> contentDatax = new HashMap<>();
+									                                    contentDatax.put("content", content);
+									                                   // contentData.put("blockCode", blockCode);
+									                                    contentDatax.put("color", colorCode);
+									
+									                                    String jsonTag = gson.toJson(contentDatax);
+									                                    ifb.setTag(R.id.main, jsonTag);
+									                             //  ifb.setTag(R.id.main + 1, "#" + colorCode);
+									                                _addViewsTo(ifb.top, content, blockCode, "");
+									
+									                                try {
+										                                    int colour = Color.parseColor("#" + list.get(i).get("colour").toString());
+										                                    ifb.top.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.center.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.bottom.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										
+										                                    ifb.top.invalidate();
+										                                    ifb.center.invalidate();
+										                                    ifb.bottom.invalidate();
+										                                } catch (Exception e) {
+										                                    Log.e("ColorError", "Error applying color to if_block", e);
+										                                }
+									
+									                            } else if (type.equals("if.e")) {
+									                                if_block ifb = new if_block(MainActivity.this);
+									                                blockarea.addView(ifb);
+									                                Map<String, String> contentDataz = new HashMap<>();
+									                                    contentDataz.put("content", content);
+									                                //    contentData.put("blockCode", blockCode);
+									                                    contentDataz.put("color", colorCode);
+									
+									                                    String jsonTag = gson.toJson(contentDataz);
+									                                    ifb.setTag(R.id.main, jsonTag);
+									                                //ifb.setTag(R.id.main + 1, "#" + colorCode);
+									                                _addViewsTo(ifb.top, content, blockCode, "");
+									
+									                                if (list.get(i).containsKey("content2")) {
+										                                    _addViewsTo(ifb.middle, list.get(i).get("content2").toString(), blockCode, "");
+										                                } else {
+										                                    _addViewsTo(ifb.middle, " ", blockCode, "");
+										                                }
+									
+									                                ifb.middle.setVisibility(View.VISIBLE);
+									                                ifb.center2.setVisibility(View.VISIBLE);
+									
+									                                try {
+										                                    int colour = Color.parseColor("#" + list.get(i).get("colour").toString());
+										                                    ifb.top.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.center.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.bottom.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.center2.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    ifb.middle.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										
+										                                    ifb.top.invalidate();
+										                                    ifb.center.invalidate();
+										                                    ifb.bottom.invalidate();
+										                                    ifb.center2.invalidate();
+										                                    ifb.middle.invalidate();
+										                                } catch (Exception e) {
+										                                    Log.e("ColorError", "Error applying color to if.e block", e);
+										                                }
+									
+									                            } else if (type.equals("variable")) { // ✅ Handling `%v.s`
+									                                variable_block vb = new variable_block(MainActivity.this);
+									                                blockarea.addView(vb);
+									
+									                                // ✅ Restore Variable Name from Saved Data
+									                                if (list.get(i).containsKey("content")) {
+										                                    //vb.setVariableName(list.get(i).get("content").toString());
+										                                    vb.setText(list.get(i).get("content").toString());
+										                                }
+									
+									                                _addViewsTo(vb, list.get(i).get("content").toString(), blockCode,""); // ✅ Adding Editable String Inside
+									
+									                                try {
+										                                    int colour = Color.parseColor("#" + list.get(i).get("colour").toString());
+										                                    vb.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+										                                    vb.invalidate();
+										                                } catch (Exception e) {
+										                                    Log.e("ColorError", "Error applying color to variable block", e);
+										                                }
+									                            }
+								                        }
+							                    } catch (Exception e) {
+							                        Log.e("BlockLoadingError", "Error loading blocks", e);
+							                    }
+						                }
+					            });
+				        }
+			    };
+		    _timer.schedule(t, 50);
+		//}
 		/*
 t = new TimerTask() {
 @Override
@@ -1388,12 +1559,16 @@ _timer.schedule(t, (int)(50));
 		
 		    ScrollView scrollView = new ScrollView(this);
 		    TextView editText = new TextView(this);
+		    //source code copy
+		    editText.setTextIsSelectable(true);
 		
 		    editText.setText(code);
+		    //size to say
 		    editText.setTextSize(14);
 		    editText.setPadding(16, 16, 16, 16);
+		    //background color customize
 		    editText.setBackgroundColor(Color.TRANSPARENT);
-		    editText.setFocusable(false);
+		 //   editText.setFocusable(false);
 		
 		    scrollView.addView(editText);
 		    builder.setView(scrollView);
@@ -1418,54 +1593,191 @@ _timer.schedule(t, (int)(50));
 		    return code;
 	}
 	
+	/**
+ * Saves the current blocks displayed in the main view to a JSON file.
+ * 
+ * @throws IOException If an error occurs while writing to the file.
+ * @throws JsonSyntaxException If there's an issue parsing existing JSON data.
+ * @gets Retrieves block data from the UI and stores it persistently.
+ */
 	private void saveBlocks() {
-		    List<Map<String, String>> blockList = new ArrayList<>();
-		    for (int i = 0; i < main.getChildCount(); i++) {
-			        View view = main.getChildAt(i);
-			        if (view instanceof regular || view instanceof if_block) {
-				            Map<String, String> blockData = new HashMap<>();
-				            blockData.put("type", view instanceof regular ? "regular" : "if_block");
-				            blockData.put("content", getBlockContent(view));
-				            int color;
-				            if (view instanceof regular) {
-					                color = 0xFFFB8C00;
-					            } else {
-					                color = 0xFF2195F3;
-					            }
-				            blockData.put("color", String.format("#%06X", (0xFFFFFF & color)));
-				            blockList.add(blockData);
-				        }
+		    if (main.getChildCount() == 0) {
+			        showToast("No blocks available.");
+			        return; // ✅ Prevent saving empty data
 			    }
-		    String json = gson.toJson(blockList);
-		    s.edit().putString("saved_blocks", json).apply();
+		    
+		    
+		    _refrieshlist();
+		    
+		
+		    @NonNull List<Map<String, String>> savedBlocks = new ArrayList<>();
+		
+		    for (int j = 0; j < main.getChildCount(); j++) {
+			        @Nullable View view = main.getChildAt(j);
+			        @NonNull Map<String, String> contentData = new HashMap<>();
+			
+			        if (view == null) continue; // Skip if view is null
+			
+			        // ✅ Ensure "blockCode" is not empty
+			        @NonNull String blockCode = getBlockContent(view);
+			        if (blockCode.isEmpty()) continue; // Skip invalid blocks
+			
+			        contentData.put("blockCode", blockCode);
+			
+			        // ✅ Determine block type
+			        if (view instanceof regular) {
+				            contentData.put("type", "regular");
+				        } else if (view instanceof if_block) {
+				            contentData.put("type", "if_block");
+				            @NonNull if_block ifb = (if_block) view;
+				
+				            // ✅ Save secondary content if exists
+				            @Nullable Object middleTag = ifb.middle.getTag(R.id.main);
+				            if (middleTag != null) {
+					                contentData.put("content_secondary", middleTag.toString());
+					            }
+				        }
+			
+			        // ✅ Merge existing JSON data from `setTag()`
+			        @Nullable Object tag = view.getTag(R.id.main);
+			        if (tag != null) {
+				            try {
+					                @Nullable Map<String, String> parsedData = gson.fromJson(tag.toString(), Map.class);
+					                if (parsedData != null) {
+						                    contentData.putAll(parsedData);
+						                }
+					            } catch (Exception e) {
+					            }
+				        }
+			
+			        // ✅ Save placeholder values safely
+			        if (blockValues.containsKey(view)) {
+				            contentData.putAll(blockValues.get(view));
+				        }
+			       
+			       @Nullable List<Integer> keys = new Helper<String>().getAllKeys();
+			if (keys != null) {
+				    for (Integer key : keys) {
+					        contentData.put(String.valueOf(key), key.toString()); // Store each key as both key and value
+					    }
+			}
+			
+			
+			
+			
+			        // ✅ Fix placeholder values before saving
+			
+			        // ✅ Add the block to list
+			        savedBlocks.add(contentData);
+			    }
+		
+		    // ✅ Save only if valid blocks exist
+		    saveBlocksToFile(EVENT_NAME, savedBlocks);
+	}
+	
+	/**
+ * Shows a Toast message.
+ */
+	private void showToast(@NonNull String message) {
+		    @NonNull Toast toast = Toast.makeText(this, message, Toast.LENGTH_SHORT);
+		    toast.show();
 	}
 	
 	private void loadBlocks() {
 		    main.removeAllViews();
-		    String json = s.getString("saved_blocks", "");
+		    String json = s.getString("saved_blocks", "[]"); // ✅ Load saved blocks
+		
 		    if (!json.isEmpty()) {
 			        try {
-				            Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
-				            List<Map<String, String>> blockList = gson.fromJson(json, listType);
-				            for (Map<String, String> blockData : blockList) {
+				            Type type = new TypeToken<List<Map<String, String>>>() {}.getType();
+				            List<Map<String, String>> savedBlocks = gson.fromJson(json, type);
+				
+				            blockContentMap.clear();
+				            blockValues.clear();
+				
+				            for (Map<String, String> data : savedBlocks) {
+					                String typeValue = data.get("type");
+					                String content = data.getOrDefault("content", "");
+					                String blockCode = data.getOrDefault("code", "");
+					                String colorCode = data.getOrDefault("colour", "");
 					                View block;
-					                if ("regular".equals(blockData.get("type"))) {
+					
+					                if ("regular".equals(typeValue)) {
 						                    block = new regular(this);
-						                } else {
+						                } else if ("if_block".equals(typeValue)) {
 						                    block = new if_block(this);
+						                } else {
+						                    continue; // Skip unknown block types
 						                }
-					                int color = "regular".equals(blockData.get("type")) ? 0xFFFB8C00 : 0xFF2195F3;
-					                ((LinearLayout) block).getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-					                _addViewsTo(block, blockData.get("content"));
+					
+					                // ✅ Restore block ID and content
+					                int blockId = View.generateViewId();
+					                block.setId(blockId);
+					
+					                if (!blockValues.containsKey(block)) {
+						                    blockValues.put(block, new HashMap<>());
+						                }
+					
+					                // ✅ Restore placeholders from saved data
+					                for (Map.Entry<String, String> entry : data.entrySet()) {
+						                    if (entry.getKey().startsWith("%")) {
+							                        blockValues.get(block).put(entry.getKey(), entry.getValue());
+							                    }
+						                }
+					
+					                _addViewsTo(block, content, blockCode, ""); // ✅ Add text views
+					
+					                // ✅ Restore placeholder text inside TextViews
+					                if (block instanceof LinearLayout) {
+						                    LinearLayout blockLayout = (LinearLayout) block;
+						                    for (int i = 0; i < blockLayout.getChildCount(); i++) {
+							                        View child = blockLayout.getChildAt(i);
+							                        if (child instanceof TextView && child.getTag() != null) {
+								                            String placeholder = child.getTag().toString();
+								                            if (blockValues.get(block).containsKey(placeholder)) {
+									                                ((TextView) child).setText(blockValues.get(block).get(placeholder)); // ✅ Restore text
+									                            }
+								                        }
+							                    }
+						                }
+					
+					                // ✅ Restore block color
+					                try {
+						                    int color = Color.parseColor("#" + colorCode);
+						                    if (block instanceof regular) {
+							                        block.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                    } else if (block instanceof if_block) {
+							                        if_block ifb = (if_block) block;
+							                        ifb.top.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                        ifb.center.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                        ifb.bottom.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                        ifb.middle.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                        ifb.center2.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+							                    }
+						                } catch (Exception e) {
+						                    Log.e("ColorError", "Error applying color", e);
+						                }
+					
 					                main.addView(block);
+					                blockContentMap.put(blockId, data);
 					            }
 				        } catch (Exception e) {
-				            Log.e("LoadBlocks", "Error parsing saved blocks JSON", e);
+				            Log.e("LoadBlocks", "Error loading blocks", e);
 				        }
 			    }
 	}
 	
-	private String getBlockContent(View block) {
+	
+	/**
+ * Retrieves the block's stored content (code) from its tag.
+ *
+ * @param block The block view from which content is extracted.
+ * @return The stored block content if available, otherwise an empty string.
+ * @receives A block view containing stored data.
+ * @gets Fetches and returns the code stored in the block's tag.
+ */
+	@NonNull
+	private String getBlockContent(@NonNull View block) {
 		    if (block instanceof regular || block instanceof if_block) {
 			        if (block.getTag() != null) {
 				            return block.getTag().toString(); // ✅ Ensure "code" is always fetched
@@ -1475,8 +1787,18 @@ _timer.schedule(t, (int)(50));
 	}
 	
 	
-	private List<String> getBlockInputValues(View block) {
-		    List<String> values = new ArrayList<>();
+	
+	/**
+ * Retrieves input values from EditText views inside a given block.
+ *
+ * @param block The block view containing EditText fields.
+ * @return A list of input values extracted from the block.
+ * @receives A block view containing input fields.
+ * @gets Collects and returns all input values from EditTexts within the block.
+ */
+	@NonNull
+	private List<String> getBlockInputValues(@NonNull View block) {
+		    @NonNull List<String> values = new ArrayList<>();
 		
 		    if (block instanceof LinearLayout) {
 			        LinearLayout layout = (LinearLayout) block;
@@ -1493,12 +1815,19 @@ _timer.schedule(t, (int)(50));
 		    return values;
 	}
 	
-	private void storeBlockData(View block) {
+	/**
+ * Stores block-related data such as code, type, and color into a map.
+ *
+ * @param block The block whose data needs to be stored.
+ * @receives A block view containing relevant data.
+ * @gets Extracts and stores the block's data for later retrieval.
+ */
+	private void storeBlockData(@NonNull View block) {
 		    if (block instanceof regular || block instanceof if_block) {
-			        Map<String, String> blockData = new HashMap<>();
+			        @NonNull Map<String, String> blockData = new HashMap<>();
 			
-			        // 🔥 Block ke tag me code store karo
-			        String extractedCode = block.getTag() != null ? block.getTag().toString() : "";
+			        // 🔥 Extract and store block's code
+			        @NonNull String extractedCode = block.getTag() != null ? block.getTag().toString() : "";
 			
 			        blockData.put("code", extractedCode);
 			        blockData.put("type", block instanceof regular ? "regular" : "if_block");
@@ -1517,15 +1846,24 @@ _timer.schedule(t, (int)(50));
 	}
 	
 	
-	
-	private List<String> getBlockPitchHolders(View block) {
-		    List<String> inputValues = new ArrayList<>();
-		    String key = "values_" + block.hashCode();
+	/**
+ * Retrieves stored placeholder values for a given block.
+ *
+ * @param block The block whose placeholder values are retrieved.
+ * @return A list of stored placeholder values, or an empty list if none exist.
+ * @throws JsonSyntaxException If an error occurs while parsing the JSON data.
+ * @receives A block view with associated stored placeholder values.
+ * @gets Fetches and returns placeholder values stored in the block.
+ */
+	@NonNull
+	private List<String> getBlockPitchHolders(@NonNull View block) {
+		    @NonNull List<String> inputValues = new ArrayList<>();
+		    @NonNull String key = "values_" + block.hashCode();
 		
 		    if (map.containsKey(key)) {
 			        try {
 				            Type type = new TypeToken<List<String>>() {}.getType();
-				            String jsonString = String.valueOf(map.get(key)); // ✅ Ensure String type
+				            @NonNull String jsonString = String.valueOf(map.get(key)); // ✅ Ensure String type
 				            inputValues = new Gson().fromJson(jsonString, type);
 				        } catch (Exception e) {
 				            Log.e("BlockPitchHolders", "Error retrieving values", e);
@@ -1605,9 +1943,15 @@ _timer.schedule(t, (int)(50));
  * @note Developed to make coding accessible to all.  
  */
 	
-	public void _addViewsTo(final View _view, final String _code, String blockCode) {
+	public void _addViewsTo(final View _view, final String _code, String blockCode, final String _values) {
 		    _view.setTag(blockCode);
 		    int placeholderIndex = 1;
+		    String[] valueArr = _values.split(";");
+		    int valueIndex = 0;
+		    
+		    ViewGroup parentLayout = (ViewGroup) _view;
+		    
+		    parentLayout.removeAllViews();
 		
 		    for (String i : _code.split(" ")) {
 			
@@ -1628,11 +1972,20 @@ _timer.schedule(t, (int)(50));
 				            ((TextView) txt).setTextSize(12);
 				            ((TextView) txt).setSingleLine(true);
 				            txt.setTag("%" + placeholderIndex + "$s");
+				            ((TextView) txt).setContentDescription(i);
 				
 				            // Ensure blockValues entry exists
 				            if (!blockValues.containsKey(_view)) {
 					                blockValues.put(_view, new HashMap<>());
 					            }
+				            
+				             // Show placeholder first, then value if available
+				            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+					                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+					            } else {
+					                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+					            }
+				            valueIndex++;
 				
 				            // Add placeholder text in map
 				            blockValues.get(_view).put(txt.getTag().toString(), ""/*"Tap to enter"*/);
@@ -1676,11 +2029,20 @@ _timer.schedule(t, (int)(50));
 				            ((TextView) txt).setTextSize(12);
 				            ((TextView) txt).setSingleLine(true);
 				            txt.setTag("%" + placeholderIndex + "$s");
+				             ((TextView) txt).setContentDescription(i);
 				
 				            // Ensure blockValues entry exists
 				            if (!blockValues.containsKey(_view)) {
 					                blockValues.put(_view, new HashMap<>());
 					            }
+				            
+				             // Show placeholder first, then value if available
+				            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+					                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+					            } else {
+					                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+					            }
+				            valueIndex++;
 				
 				            // Add placeholder text in map
 				            blockValues.get(_view).put(txt.getTag().toString(), "");
@@ -1712,17 +2074,345 @@ _timer.schedule(t, (int)(50));
 				            boolBlock.setLayoutParams(params);
 				
 				        } else {
-				            ((LinearLayout) _view).addView(new TextView(MainActivity.this));
-				
-				            View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
-				
-				            ((TextView) txt).setText(i + " ");
-				            ((TextView) txt).setTextColor(0xFFFFFFFF);
-				            ((TextView) txt).setTypeface(Typeface.DEFAULT, Typeface.BOLD);
-				        }
-			    }
+				            if (i.equals("%v.visibility")) {
+					    ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+					
+					    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+					
+					    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+					    ((TextView) txt).setBackground(new GradientDrawable() {
+						        public GradientDrawable getIns(int a, int b) {
+							            this.setCornerRadius(a);
+							            this.setColor(b);
+							            return this;
+							        }
+						    }.getIns(90, 0xFFFFFFFF));
+					
+					    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+					        120, 
+					        LinearLayout.LayoutParams.WRAP_CONTENT
+					    );
+					    params.setMargins(0, 0, 8, 8);
+					    
+					    txt.setPadding(5, 2, 5, 2);
+					    txt.setLayoutParams(params);
+					    
+					    ((TextView) txt).setTextSize(12);
+					    ((TextView) txt).setSingleLine(true);
+					     // Show placeholder first, then value if available
+					            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+						                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+						            } else {
+						                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+						            }
+					            valueIndex++;
+					    ((TextView) txt).setId(View.generateViewId());
+					    
+					    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+					     ((TextView) txt).setContentDescription(i);
+					    
+					    // Ensure blockValues entry exists
+					            if (!blockValues.containsKey(_view)) {
+						                blockValues.put(_view, new HashMap<>());
+						            }
+					
+					            // Add placeholder text in map
+					            blockValues.get(_view).put(txt.getTag().toString(), "View."/*"Tap to enter"*/);
+					
+					            placeholderIndex++;
+					
+					    txt.setOnClickListener(new View.OnClickListener() {
+						        @Override
+						        public void onClick(View _view) {
+							            showVisibilityDialog((TextView) txt);
+							        }
+						    });
+				} else {
+					    if (i.equals("%d.drawable")) { 
+						        ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+						
+						    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+						
+						    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+						    ((TextView) txt).setBackground(new GradientDrawable() {
+							        public GradientDrawable getIns(int a, int b) {
+								            this.setCornerRadius(a);
+								            this.setColor(b);
+								            return this;
+								        }
+							    }.getIns(90, 0xFFFFFFFF));
+						
+						    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+						        120, 
+						        LinearLayout.LayoutParams.WRAP_CONTENT
+						    );
+						    params.setMargins(0, 0, 8, 8);
+						    
+						    txt.setPadding(5, 2, 5, 2);
+						    txt.setLayoutParams(params);
+						    
+						    ((TextView) txt).setTextSize(12);
+						    ((TextView) txt).setSingleLine(true);
+						     // Show placeholder first, then value if available
+						            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+							                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+							            } else {
+							                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+							            }
+						            valueIndex++;
+						    ((TextView) txt).setId(View.generateViewId());
+						    
+						    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+						     ((TextView) txt).setContentDescription(i);
+						    
+						    // Ensure blockValues entry exists
+						            if (!blockValues.containsKey(_view)) {
+							                blockValues.put(_view, new HashMap<>());
+							            }
+						
+						            // Add placeholder text in map
+						            blockValues.get(_view).put(txt.getTag().toString(), "R.drawable."/*"Tap to enter"*/);
+						
+						            placeholderIndex++;
+						
+						    txt.setOnClickListener(new View.OnClickListener() {
+							        @Override
+							        public void onClick(View _view) {
+								            showDrawableSelectionDialog((TextView) txt);
+								        }
+							    });
+						
+						     } else {
+						         if (i.equals("%l.transcriptmode")) { 
+							             ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+							
+							    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+							
+							    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+							    ((TextView) txt).setBackground(new GradientDrawable() {
+								        public GradientDrawable getIns(int a, int b) {
+									            this.setCornerRadius(a);
+									            this.setColor(b);
+									            return this;
+									        }
+								    }.getIns(90, 0xFFFFFFFF));
+							
+							    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+							        120, 
+							        LinearLayout.LayoutParams.WRAP_CONTENT
+							    );
+							    params.setMargins(0, 0, 8, 8);
+							    
+							    txt.setPadding(5, 2, 5, 2);
+							    txt.setLayoutParams(params);
+							    
+							    ((TextView) txt).setTextSize(12);
+							    ((TextView) txt).setSingleLine(true);
+							     // Show placeholder first, then value if available
+							            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+								                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+								            } else {
+								                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+								            }
+							            valueIndex++;
+							    ((TextView) txt).setId(View.generateViewId());
+							    
+							    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+							     ((TextView) txt).setContentDescription(i);
+							    
+							    // Ensure blockValues entry exists
+							            if (!blockValues.containsKey(_view)) {
+								                blockValues.put(_view, new HashMap<>());
+								            }
+							
+							            // Add placeholder text in map
+							            blockValues.get(_view).put(txt.getTag().toString(), "Listview."/*"Tap to enter"*/);
+							
+							            placeholderIndex++;
+							
+							    txt.setOnClickListener(new View.OnClickListener() {
+								        @Override
+								        public void onClick(View _view) {
+									            showTranscriptDialog((TextView) txt);
+									        }
+								    });
+							         } else {
+							             if (i.equals("%v.font")) {  
+								                  ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+								
+								    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+								
+								    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+								    ((TextView) txt).setBackground(new GradientDrawable() {
+									        public GradientDrawable getIns(int a, int b) {
+										            this.setCornerRadius(a);
+										            this.setColor(b);
+										            return this;
+										        }
+									    }.getIns(90, 0xFFFFFFFF));
+								
+								    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+								        120, 
+								        LinearLayout.LayoutParams.WRAP_CONTENT
+								    );
+								    params.setMargins(0, 0, 8, 8);
+								    
+								    txt.setPadding(5, 2, 5, 2);
+								    txt.setLayoutParams(params);
+								    
+								    ((TextView) txt).setTextSize(12);
+								    ((TextView) txt).setSingleLine(true);
+								     // Show placeholder first, then value if available
+								            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+									                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+									            } else {
+									                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+									            }
+								            valueIndex++;
+								    ((TextView) txt).setId(View.generateViewId());
+								     ((TextView) txt).setContentDescription(i);
+								    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+								    
+								    // Ensure blockValues entry exists
+								            if (!blockValues.containsKey(_view)) {
+									                blockValues.put(_view, new HashMap<>());
+									            }
+								
+								            // Add placeholder text in map
+								            blockValues.get(_view).put(txt.getTag().toString(), "Typeface.DEFAULT"/*"Tap to enter"*/);
+								
+								            placeholderIndex++;
+								
+								    txt.setOnClickListener(new View.OnClickListener() {
+									        @Override
+									        public void onClick(View _view) {
+										            showFontSelectionDialog((TextView) txt);
+										        }
+									    });
+								             } else {
+								              if (i.equals("%v.typeface")) {    
+									                  ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+									
+									    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+									
+									    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+									    ((TextView) txt).setBackground(new GradientDrawable() {
+										        public GradientDrawable getIns(int a, int b) {
+											            this.setCornerRadius(a);
+											            this.setColor(b);
+											            return this;
+											        }
+										    }.getIns(90, 0xFFFFFFFF));
+									
+									    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+									        120, 
+									        LinearLayout.LayoutParams.WRAP_CONTENT
+									    );
+									    params.setMargins(0, 0, 8, 8);
+									    
+									    txt.setPadding(5, 2, 5, 2);
+									    txt.setLayoutParams(params);
+									    
+									    ((TextView) txt).setTextSize(12);
+									    ((TextView) txt).setSingleLine(true);
+									     // Show placeholder first, then value if available
+									            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+										                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+										            } else {
+										                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+										            }
+									            valueIndex++;
+									    ((TextView) txt).setId(View.generateViewId());
+									     ((TextView) txt).setContentDescription(i);
+									    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+									    
+									    // Ensure blockValues entry exists
+									            if (!blockValues.containsKey(_view)) {
+										                blockValues.put(_view, new HashMap<>());
+										            }
+									
+									            // Add placeholder text in map
+									            blockValues.get(_view).put(txt.getTag().toString(), "0"/*"Tap to enter"*/);
+									
+									            placeholderIndex++;
+									
+									    txt.setOnClickListener(new View.OnClickListener() {
+										        @Override
+										        public void onClick(View _view) {
+											            showTypeFaceSelectionDialog((TextView) txt);
+											        }
+										    });
+									               } else {
+									             if (i.equals("%v.view")) { 
+										                 ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+										
+										    View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+										
+										    ((TextView) txt).setBackgroundColor(0xFFFFFFFF);
+										    ((TextView) txt).setBackground(new GradientDrawable() {
+											        public GradientDrawable getIns(int a, int b) {
+												            this.setCornerRadius(a);
+												            this.setColor(b);
+												            return this;
+												        }
+											    }.getIns(90, 0xFFFFFFFF));
+										
+										    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+										        120, 
+										        LinearLayout.LayoutParams.WRAP_CONTENT
+										    );
+										    params.setMargins(0, 0, 8, 8);
+										    
+										    txt.setPadding(5, 2, 5, 2);
+										    txt.setLayoutParams(params);
+										    
+										    ((TextView) txt).setTextSize(12);
+										    ((TextView) txt).setSingleLine(true);
+										     // Show placeholder first, then value if available
+										            if (valueArr.length > valueIndex && !valueArr[valueIndex].isEmpty()) {
+											                 ((TextView) txt).setText(valueArr[valueIndex]); // Show saved value
+											            } else {
+											                 ((TextView) txt).setText(i); // Show placeholder if no value exists
+											            }
+										            valueIndex++;
+										    ((TextView) txt).setId(View.generateViewId());
+										     ((TextView) txt).setContentDescription(i);
+										    ((TextView) txt).setTag("%" + placeholderIndex + "$s");
+										    
+										    // Ensure blockValues entry exists
+										            if (!blockValues.containsKey(_view)) {
+											                blockValues.put(_view, new HashMap<>());
+											            }
+										
+										            // Add placeholder text in map
+										            blockValues.get(_view).put(txt.getTag().toString(), ""/*"Tap to enter"*/);
+										
+										            placeholderIndex++;
+										
+										    txt.setOnClickListener(new View.OnClickListener() {
+											        @Override
+											        public void onClick(View _view) {
+												            showViewSelectionDialog((TextView) txt);
+												        }
+											    });
+										             } else {
+										            ((LinearLayout) _view).addView(new TextView(MainActivity.this));
+										
+										            View txt = ((LinearLayout) _view).getChildAt(((LinearLayout) _view).getChildCount() - 1);
+										
+										            ((TextView) txt).setText(i + " ");
+										            ((TextView) txt).setTextColor(0xFFFFFFFF);
+										            ((TextView) txt).setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+										            }
+									            }
+								            }
+							         }
+						       }     
+					        }
+				        
+				    }
+			 }
 	}
-	
 	private void updateBlockPlaceholders(View block, String placeholder, String newValue) {
 		    if (block.getTag() != null) {
 			        String blockCode = block.getTag().toString();
@@ -1774,6 +2464,1042 @@ _timer.schedule(t, (int)(50));
 		    return placeholderValues;
 	}
 	
+	// ✅ Get block color (Fix multiple blocks issue)
+	
+	// ✅ Apply block color properly (Fix multiple blocks issue)
+	private void applyBlockColor(View block, String colourString) {
+		    try {
+			        if (colourString != null && !colourString.isEmpty()) {
+				            int colour = Color.parseColor(colourString);
+				            GradientDrawable drawable = new GradientDrawable();
+				            drawable.setColor(colour);
+				            block.setBackground(drawable);
+				            block.invalidate();
+				        }
+			    } catch (Exception e) {
+			        Log.e("ColorError", "Error applying color", e);
+			    }
+	}
+	
+	private String getBlockColor(View view) {
+		    if (view.getBackground() instanceof ColorDrawable) {
+			        int color = ((ColorDrawable) view.getBackground()).getColor();
+			        return String.format("#%06X", (0xFFFFFF & color));
+			    } else {
+			        return "#FB8C00";  // Default color
+			    }
+	}
+	
+	private View createBlockFromData(Map<String, String> blockData) {
+		    View block;
+		    if ("regular".equals(blockData.get("type"))) {
+			        block = new regular(this);
+			    } else {
+			        block = new if_block(this);
+			    }
+		
+		    // ✅ Use `list.get(i).get("content")` instead of `getBlockContent(view)`
+		    _addViewsTo(block, blockData.getOrDefault("content", ""), blockData.getOrDefault("code", ""),"");
+		
+		    // ✅ Restore placeholders (Editable text inside blocks)
+		    if (blockData.containsKey("placeholders")) {
+			        Map<String, String> restoredPlaceholders = gson.fromJson(blockData.get("placeholders"), new TypeToken<Map<String, String>>() {}.getType());
+			        blockValues.put(block, restoredPlaceholders);
+			    }
+		
+		    // ✅ Restore color
+		    if (blockData.containsKey("colour")) {
+			        try {
+				            int colour = Color.parseColor("#" + blockData.get("colour"));
+				            block.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+				            block.invalidate();
+				        } catch (Exception e) {
+				            Log.e("ColorError", "Error applying color", e);
+				        }
+			    }
+		
+		    // ✅ Restore "content2" if applicable
+		    if (block instanceof if_block && blockData.containsKey("content2")) {
+			        if_block ifb = (if_block) block;
+			        _addViewsTo(ifb.middle, blockData.get("content2"), blockData.getOrDefault("code", ""), "");
+			    }
+		
+		    // ✅ Load child blocks if they exist
+		    if (blockData.containsKey("children")) {
+			        List<Map<String, String>> childBlocks = gson.fromJson(blockData.get("children"), new TypeToken<List<Map<String, String>>>() {}.getType());
+			        for (Map<String, String> childData : childBlocks) {
+				            View childBlock = createBlockFromData(childData);
+				            if (childBlock != null) {
+					                ((ViewGroup) block).addView(childBlock);
+					            }
+				        }
+			    }
+		
+		    return block;
+	}
+	private List<Map<String, String>> getBlockInputValuesq(View block) {
+		    List<Map<String, String>> values = new ArrayList<>();
+		    if (block instanceof ViewGroup) {
+			        ViewGroup group = (ViewGroup) block;
+			        for (int i = 0; i < group.getChildCount(); i++) {
+				            View child = group.getChildAt(i);
+				            if (child instanceof TextView) {
+					                Map<String, String> valueMap = new HashMap<>();
+					                valueMap.put("tag", String.valueOf(child.getTag())); // ✅ Store original tag (%e.s, %e.n, etc.)
+					                valueMap.put("value", ((TextView) child).getText().toString()); // ✅ Store actual text
+					                values.add(valueMap);
+					            }
+				        }
+			    }
+		    return values;
+	}
+	private void restoreBlockInputsq(View block, List<Map<String, String>> values) {
+		    if (block instanceof ViewGroup) {
+			        ViewGroup group = (ViewGroup) block;
+			        int valueIndex = 0;
+			        for (int i = 0; i < group.getChildCount(); i++) {
+				            View child = group.getChildAt(i);
+				            if (child instanceof TextView && valueIndex < values.size()) {
+					                Map<String, String> valueMap = values.get(valueIndex);
+					                ((TextView) child).setText(valueMap.get("value")); // ✅ Restore saved text
+					                child.setTag(valueMap.get("tag")); // ✅ Restore original tag (%e.s, %e.n, etc.)
+					                valueIndex++;
+					            }
+				        }
+			    }
+	}
+	
+	private void saveBlocks(String... contents) {
+		    List<Map<String, String>> blockList = new ArrayList<>();
+		
+		    // ✅ Load existing dataMap
+		    if (s.contains("data")) {
+			        dataMap = gson.fromJson(s.getString("data", ""), type);
+			    }
+		
+		    // ✅ Clear `list` before adding new blocks
+		    list.clear();
+		
+		    // ✅ Convert `List<Map<String, String>>` to `List<HashMap<String, Object>>`
+		    if (dataMap.containsKey(liststring.get((int) n))) {
+			        List<Map<String, String>> tempList = dataMap.get(liststring.get((int) n));
+			
+			        for (Map<String, String> map : tempList) {
+				            HashMap<String, Object> hashMap = new HashMap<>(map);
+				            list.add(hashMap);
+				        }
+			    }
+		
+		    // ✅ Loop through **ALL CHILDREN** in `main`
+		    for (int i = 0; i < main.getChildCount(); i++) {
+			        View view = main.getChildAt(i);
+			        if (view instanceof regular || view instanceof if_block) {
+				            Map<String, String> blockData = new HashMap<>();
+				            blockData.put("type", view instanceof regular ? "regular" : "if_block");
+				
+				            // ✅ Store **unique block data**
+				            blockData.put("block_data", getBlockContent(view));
+				
+				            // ✅ Store **individual content for each block**
+				          /*  if (i < list.size() && list.get(i).containsKey("content")) {
+                blockData.put("content", list.get(i).get("content").toString());
+            } else {
+                blockData.put("content", "");  // ✅ Default empty content (Avoid null errors)
+            }*/
+				            // ✅ Extract text from child views (like EditText/TextView)
+				List<Map<String, String>> inputValues = getBlockInputValuesq(view);
+				//blockData.put("content", gson.toJson(inputValues)); // ✅ Store JSON string
+				    
+				
+				
+				            // ✅ Store `content_secondary` for `if_block`
+				            if (view instanceof if_block) {
+					                if_block ifb = (if_block) view;
+					                blockData.put("content_secondary", ifb.middle.getTag() != null ? ifb.middle.getTag().toString() : "");
+					            }
+				            
+				            if (view instanceof if_block) {
+					            if_block ifb = (if_block) view;
+					        //    blockData.put("type", "if");
+					           // blockData.put("content", content);
+					
+					            // 🔥 Save content in Map
+					           // ifBlockData.put(ifb.getId(), ifb.getTag(ifb.getId()).toString());
+					        } 
+				        
+				        if (view instanceof regular) {
+					            regular r = (regular) view;
+					        //    blockData.put("type", "if");
+					           // blockData.put("content", r.getTag(r.getId()).toString());
+					
+					            // 🔥 Save content in Map
+					           // ifBlockData.put(ifb.getId(), ifb.getTag(ifb.getId()).toString());
+					        } 
+				
+				            // ✅ Store **unique block position**
+				            blockData.put("position", String.valueOf(i));
+				            for (int j = 0; j < contents.length; j++) {
+					                blockData.put("content" + j, contents[j]); // 🔥 Save as content0, content1, content2...
+					            }
+				
+				            // ✅ Store code for **each block**
+				            blockData.put("code", view.getTag() != null ? view.getTag().toString() : "");
+				
+				            // ✅ Store **color for each block**
+				            if (i < list.size() && list.get(i).containsKey("colour")) {
+					                blockData.put("colour", list.get(i).get("colour").toString());
+					            } else {
+					                blockData.put("colour", "FB8C00");  // ✅ Default empty content (Avoid null errors)
+					            }
+				
+				            // ✅ Store **placeholders for each block**
+				            if (blockValues.containsKey(view)) {
+					                Map<String, String> placeholders = blockValues.get(view);
+					                blockData.put("placeholders", gson.toJson(placeholders));
+					            }
+				
+				            // ✅ **Add block to the list (Fix multiple blocks issue)**
+				            blockList.add(blockData);
+				        }
+			    }
+		
+		    // ✅ Save ALL blocks data in SharedPreferences
+		    s.edit().putString("saved_blocks", gson.toJson(blockList)).apply();
+	}
+	
+	
+	private void loadBlocksq() {
+		    main.removeAllViews();
+		    String json = s.getString("saved_blocks", "");
+		
+		    if (!json.isEmpty()) {
+			        try {
+				            Type listType = new TypeToken<List<Map<String, String>>>() {}.getType();
+				            List<Map<String, String>> blockList = gson.fromJson(json, listType);
+				
+				            for (Map<String, String> blockData : blockList) {
+					                View block;
+					
+					                if ("regular".equals(blockData.get("type"))) {
+						                    block = new regular(this);
+						                } else {
+						                    block = new if_block(this);
+						                }
+					
+					                // ✅ Retrieve multiple content fields
+					                List<String> contents = new ArrayList<>();
+					                for (int j = 0; blockData.containsKey("content" + j); j++) {
+						                    contents.add(blockData.get("content" + j));
+						                }
+					
+					                // ✅ Restore each content separately
+					                for (String content : contents) {
+						                    _addViewsTo(block, content, blockData.getOrDefault("code", ""), "");
+						                }
+					
+					                if (block instanceof if_block) {
+						                    if_block ifb = (if_block) block;
+						                    int colour = Color.parseColor("#" + blockData.getOrDefault("colour", "FB8C00"));
+						                    ifb.top.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+						                    ifb.center.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+						                    ifb.bottom.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+						                    ifb.top.invalidate();
+						                    ifb.center.invalidate();
+						                    ifb.bottom.invalidate();
+						                }
+					
+					                main.addView(block);
+					            }
+				        } catch (Exception e) {
+				            Log.e("LoadBlocks", "Error loading blocks", e);
+				        }
+			    }
+	}
+	
+	/**
+ * Loads saved blocks for the specified event name and adds them to the main view.
+ * 
+ * @param eventName The name of the event whose blocks should be loaded.
+ * @throws IOException If an error occurs while reading the blocks file.
+ * @throws JsonSyntaxException If the JSON format is invalid.
+ * @gets Retrieves saved block data from the JSON file and populates the UI.
+ */
+	private void loadBlocks(@NonNull String eventName) {
+		    main.removeAllViews();
+		    File file = new File(Environment.getExternalStorageDirectory(), "app/blocks.json");
+		
+		    if (!file.exists()) {
+			        Log.e("LoadError", "No saved blocks found.");
+			        return;
+			    }
+		
+		    try (FileReader reader = new FileReader(file)) {
+			        Type type = new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
+			        Map<String, List<Map<String, String>>> allEventsData = gson.fromJson(reader, type);
+			
+			        if (allEventsData == null) {
+				            Log.e("LoadBlocks", "Failed to parse blocks.json.");
+				            return;
+				        }
+			
+			        List<Map<String, String>> savedBlocks = allEventsData.getOrDefault(eventName, new ArrayList<>());
+			
+			        blockContentMap.clear();
+			        blockValues.clear();
+			
+			        for (@NonNull Map<String, String> data : savedBlocks) {
+				            @Nullable String typeValue = data.get("type");
+				            @Nullable String content = data.get("content");
+				            @Nullable String blockCode = data.get("blockCode");
+				            @Nullable String colorCode = data.getOrDefault("color", "FB8C00"); // Default color
+				
+				            if (typeValue == null || blockCode == null || content == null) {
+					                Log.e("LoadBlocks", "Skipping invalid block data: " + data);
+					                showMessage("Skipping invalid block data: " + data);
+					                ((android.content.ClipboardManager) getSystemService(getApplicationContext().CLIPBOARD_SERVICE))
+					                        .setPrimaryClip(ClipData.newPlainText("errorlog", "Skipping invalid block data: " + data));
+					                continue;
+					            }
+				
+				            // **Fix: Ensure placeholders are properly replaced**
+				         /*   for (Map.Entry<String, String> entry : data.entrySet()) {
+    if (entry.getKey().startsWith("%") && entry.getValue() != null && blockCode != null) {
+        blockCode = blockCode.replace(entry.getKey(), entry.getValue());
+    }
+}
+*/
+				
+				            @NonNull View block;
+				            if ("regular".equals(typeValue)) {
+					                block = new regular(this);
+					            } else if ("if_block".equals(typeValue)) {
+					                block = new if_block(this);
+					            } else {
+					                continue;
+					            }
+				
+				            int blockId = View.generateViewId();
+				            block.setId(blockId);
+				
+				            blockValues.putIfAbsent(block, new HashMap<>());
+				
+				            // ✅ Fix: Ensure blockValues stores placeholders correctly
+				         /*   for (Map.Entry<String, String> entry : data.entrySet()) {
+                if (entry.getKey().startsWith("%")) {
+                    blockValues.get(block).put(entry.getKey(), entry.getValue());
+                }
+            }*/
+				
+				            // ✅ Restore placeholders in `_addViewsTo`
+				            _addViewsTo(block, content, blockCode, "");
+				
+				            // ✅ Restore block color
+				            restoreBlockColor(block, colorCode);
+				
+				            main.addView(block);
+				            blockContentMap.put(blockId, data);
+				        }
+			
+			    } catch (Exception e) {
+			        Log.e("LoadBlocks", "Error loading blocks", e);
+			    }
+	}
+	
+	{
+	}
+	
+	
+	public void _init() {
+	}
+	private Stack<List<Map<String, String>>> undoStack = new Stack<>();
+	private Stack<List<Map<String, String>>> redoStack = new Stack<>();
+	private ImageView undoImage, redoImage;
+	private Map<Integer, Map<String, String>> blockContentMap = new HashMap<>();
+	private void saveState() {
+		    if (main.getChildCount() > 0) {
+			        List<Map<String, String>> currentState = new ArrayList<>();
+			
+			        for (int i = 0; i < main.getChildCount(); i++) {
+				            View view = main.getChildAt(i);
+				            if (view instanceof regular || view instanceof if_block) {
+					                Map<String, String> blockData = new HashMap<>();
+					                blockData.put("type", view instanceof regular ? "regular" : "if_block");
+					
+					                // ✅ Store `block_data` separately
+					                String block_data = getBlockContent(view);
+					                blockData.put("block_data", block_data);
+					
+					                // ✅ Store `content` from the list
+					                String content = list.get(i).get("content").toString();
+					                blockData.put("content", content);
+					
+					                // ✅ Store `content_secondary`
+					                if (view instanceof if_block) {
+						                    if_block ifb = (if_block) view;
+						                    blockData.put("content_secondary", ifb.middle.getTag() != null ? ifb.middle.getTag().toString() : "");
+						                }
+					
+					                // ✅ Store color
+					                Drawable background = view.getBackground();
+					                if (background instanceof ColorDrawable) {
+						                    int color = ((ColorDrawable) background).getColor();
+						                    blockData.put("colour", String.format("#%06X", (0xFFFFFF & color)));
+						                } else {
+						                    blockData.put("colour", "#FB8C00");
+						                }
+					
+					                // ✅ Store placeholders
+					                if (blockValues.containsKey(view)) {
+						                    for (Map.Entry<String, String> entry : blockValues.get(view).entrySet()) {
+							                        blockData.put(entry.getKey(), entry.getValue());
+							                    }
+						                }
+					
+					                currentState.add(blockData);
+					            }
+				        }
+			
+			        undoStack.push(currentState);
+			        redoStack.clear();
+			        invalidateOptionsMenu(); 
+			        updateUndoRedoUI();
+			    }
+	}
+	private void restoreBlocks(List<Map<String, String>> blocks) {
+		    main.removeAllViews();
+		
+		    for (Map<String, String> blockData : blocks) {
+			        View block;
+			        if ("regular".equals(blockData.get("type"))) {
+				            block = new regular(this);
+				        } else {
+				            block = new if_block(this);
+				        }
+			
+			        // Use _addViewsTo to restore placeholders
+			        _addViewsTo(block, blockData.get("content"), blockData.get("code"), "");
+			
+			        // Restore color
+			        try {
+				            String colours = blockData.get("colour");
+				            int colour = Color.parseColor(colours);
+				            block.getBackground().setColorFilter(colour, PorterDuff.Mode.MULTIPLY);
+				            block.invalidate();
+				        } catch (Exception e) {
+				            Log.e("RestoreBlocks", "Error parsing color", e);
+				        }
+			
+			        main.addView(block);
+			    }
+	}
+	private void updateUndoRedoUI() {
+		    undoImage.setColorFilter(undoStack.isEmpty() ? Color.GRAY : Color.BLACK);
+		    redoImage.setColorFilter(redoStack.isEmpty() ? Color.GRAY : Color.BLACK);
+	}
+	
+	private void redo() {
+		    if (!redoStack.isEmpty()) {
+			        undoStack.push(new ArrayList<>(redoStack.pop())); // Save current state for undo
+			        restoreBlocks(undoStack.peek());
+			        updateUndoRedoUI();
+			        invalidateOptionsMenu(); 
+			    }
+	}
+	
+	private void undo() {
+		    if (!undoStack.isEmpty()) {
+			        redoStack.push(new ArrayList<>(undoStack.pop())); // Save current state for redo
+			        restoreBlocks(undoStack.isEmpty() ? new ArrayList<>() : undoStack.peek());
+			        updateUndoRedoUI();
+			        invalidateOptionsMenu(); 
+			    }
+	}
+	
+	class variable_block extends TextView implements View.OnDragListener {
+		
+		    public variable_block(Context ctx) {
+			        super(ctx);
+			        this.setBackgroundResource(R.drawable.var_block);
+			        this.getBackground().setColorFilter(0xFF7E57C2, PorterDuff.Mode.MULTIPLY);
+			        this.setGravity(Gravity.CENTER_VERTICAL | Gravity.LEFT);
+			        this.setPadding(8, 16, 8, 16);
+			        this.setLayoutParams(new LinearLayout.LayoutParams(
+			                LinearLayout.LayoutParams.WRAP_CONTENT,
+			                LinearLayout.LayoutParams.WRAP_CONTENT
+			        ));
+			
+			        this.setText("");  // Default Variable Name
+			        this.setTextSize(12);
+			        this.setPadding(8, 4, 8, 4);
+			        this.setBackgroundColor(0xFFFFFFFF);
+			        this.setTextColor(Color.BLACK);
+			        this.setSingleLine(true);
+			
+			        // 🔥 Click Listener to Edit Variable Name
+			        this.setOnClickListener(new View.OnClickListener() {
+				            @Override
+				            public void onClick(View _view) {
+					                _editdialogue(variable_block.this, "string");  // Open Edit Dialog
+					            }
+				        });
+			
+			        // 🔥 Drag & Drop Support (Only for %e.s Blocks)
+			        this.setOnLongClickListener(new View.OnLongClickListener() {
+				            @Override
+				            public boolean onLongClick(View _view) {
+					                ClipData.Item item = new ClipData.Item("string");  // Mark as variable type
+					                ClipData data = new ClipData("variable", new String[]{ClipDescription.MIMETYPE_TEXT_PLAIN}, item);
+					                DragShadowBuilder shadow = new View.DragShadowBuilder(_view);
+					                
+					                if (Build.VERSION.SDK_INT >= 24) {
+						                    _view.startDragAndDrop(data, shadow, _view, 1);
+						                } else {
+						                    _view.startDrag(data, shadow, _view, 1);
+						                }
+					                return true;
+					            }
+				        });
+			
+			        this.setTag("string");
+			        this.setOnDragListener(this);  // Implementing DragListener directly
+			    }
+		
+		    // 🔥 Drag Event Handler
+		    @Override
+		    public boolean onDrag(View v, DragEvent event) {
+			        switch (event.getAction()) {
+				            case DragEvent.ACTION_DRAG_STARTED:
+				                return event.getClipDescription().hasMimeType(ClipDescription.MIMETYPE_TEXT_PLAIN);
+				
+				            case DragEvent.ACTION_DROP:
+				                if ("%e.s".equals(event.getClipData().getItemAt(0).getText().toString())) {
+					                    this.setText(event.getClipData().getItemAt(0).getText().toString());  // Set dragged value
+					                    return true;
+					                }
+				                return false;
+				
+				            default:
+				                return false;
+				        }
+			    }
+	}
+	
+	{
+	}
+	
+	
+	public void _features() {
+		/**
+ * Project: Open Source Block-Based Programming System  
+ *  
+ * Description:  
+ * This project is designed to provide an intuitive, drag-and-drop block-based  
+ * programming environment. It enables developers, especially beginners and  
+ * those with limited resources, to create applications visually without  
+ * needing deep coding knowledge. The system supports real-time source code  
+ * generation from blocks, making coding more accessible and efficient.  
+ *  
+ * New Additions (24-02-2025):  
+ * - Added placeholders in blocks for better customization.  
+ * - Example: `%v.visibility` can now be used to set visibility states such as `GONE`, `VISIBLE`, `INVISIBLE`.  
+ *  
+ * Features:  
+ * - Visual block-based coding interface  
+ * - Real-time source code generation  
+ * - Open-source and free to modify  
+ * - Designed for beginners and experienced developers alike  
+ * - Lightweight, efficient, and highly scalable  
+ *  
+ * @author NexusTeam & SmartIndiaGaming  
+ * @created 23-02-2025  
+ * @license Open Source - Free to Modify & Distribute  
+ * @origin Made in India 🇮🇳 | Empowering Developers Globally  
+ * @note Developed to make coding accessible to all.  
+ */
+		
+	}
+	private void showVisibilityDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select Visibility");
+		
+		    String[] options = {"VISIBLE", "INVISIBLE", "GONE"};
+		    builder.setItems(options, new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            String selectedValue = options[which];
+				            txt.setText(selectedValue); // Update text with selected visibility
+				
+				            // Ensure blockValues entry exists
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				
+				            // Store the selected value in blockValues
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), "View." + selectedValue);
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	private void showDrawableSelectionDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select Drawable");
+		
+		    // Get drawable files from /custom_folder
+		    List<String> drawablePaths = getDrawableFiles();
+		    List<String> displayNames = new ArrayList<>();
+		
+		    // Create a mapping of displayed names to actual paths
+		    Map<String, String> nameToPathMap = new HashMap<>();
+		
+		    // Add "None" option
+		    displayNames.add("None");
+		    nameToPathMap.put("None", "R.drawable."); // None = null path
+		
+		    for (String path : drawablePaths) {
+			        if (path != null) {
+				            String name = removeFileExtension(new File(path).getName());
+				            displayNames.add(name);
+				            nameToPathMap.put(name, path); // Map name to path correctly
+				        }
+			    }
+		
+		    builder.setItems(displayNames.toArray(new String[0]), new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            String selectedName = displayNames.get(which);
+				            String selectedPath = nameToPathMap.get(selectedName);
+				
+				            if (selectedPath == null) {
+					                // None selected
+					                txt.setText("None");
+					              //  txt.setBackground(null);
+					            } else {
+					                // Set drawable
+					             //   txt.setBackground(Drawable.createFromPath(selectedPath));
+					                txt.setText(selectedName);
+					            }
+				
+				            // Store path in blockValues
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), 
+				                selectedPath == null ? "R.drawable." : "R.drawable." + selectedName);
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	private void showTranscriptDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select transcript mode");
+		
+		    String[] options = {"TRANSCRIPT_MODE_NORMAL", "TRANSCRIPT_MODE_DISABLED", "TRANSCRIPT_MODE_ALWAYS_SCROLL"};
+		    builder.setItems(options, new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            String selectedValue = options[which];
+				            txt.setText(selectedValue); // Update text with selected visibility
+				
+				            // Ensure blockValues entry exists
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				
+				            // Store the selected value in blockValues
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), "ListView." + selectedValue);
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	private void showFontSelectionDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select Font");
+		
+		    // Get font files from /custom_folder
+		    List<String> fontPaths = getFontFiles();
+		    List<String> displayNames = new ArrayList<>();
+		
+		    // Create a mapping of displayed names to actual paths
+		    Map<String, String> nameToPathMap = new HashMap<>();
+		
+		    // Add "None" option
+		    displayNames.add("None");
+		    nameToPathMap.put("NONE", "Typeface.DEFAULT"); // None = Typeface.DEFAULT
+		
+		    for (String path : fontPaths) {
+			        if (path != null) {
+				            String name = removeFontExtension(new File(path).getName());
+				            displayNames.add(name);
+				            nameToPathMap.put(name, path); // Map name to path correctly
+				        }
+			    }
+		
+		    builder.setItems(displayNames.toArray(new String[0]), new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            String selectedName = displayNames.get(which);
+				            String selectedPath = nameToPathMap.get(selectedName);
+				
+				            if (selectedPath == null) {
+					                // None selected
+					                txt.setText("None");
+					            } else {
+					                // Set selected font
+					                txt.setText(selectedName);
+					            }
+				
+				            // Store path in blockValues
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				
+				            // Format the selected font path correctly
+				            String formattedFontPath = selectedPath == null ? "Typeface.DEFAULT" : "\"fonts/" + selectedName + ".ttf\"";
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), formattedFontPath);
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	
+	private void showTypeFaceSelectionDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select Typeface");
+		
+		    String[] options = {"normal", "bold", "italic", "bold|italic"};
+		    builder.setItems(options, new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            txt.setText(options[which]); // Show selected text
+				
+				            // Ensure blockValues entry exists
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				
+				            // Store the selected index in blockValues instead of text
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), String.valueOf(which));
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	private void showViewSelectionDialog(TextView txt) {
+		    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+		    builder.setTitle("Select view");
+		    
+		    /**
+    suggesting to use shapun layout editor and enjoy with this feature. 
+    @support NexusTeam & SmartIndiaGaming.
+    total present YouTube subscribers is 481. 
+    **/
+		
+		    String[] options = {"view1", "view2", "view3"};
+		    builder.setItems(options, new DialogInterface.OnClickListener() {
+			        @Override
+			        public void onClick(DialogInterface dialog, int which) {
+				            String selectedValue = options[which];
+				            txt.setText(selectedValue); // Update text with selected visibility
+				
+				            // Ensure blockValues entry exists
+				            View parentBlock = (View) txt.getParent();
+				            if (!blockValues.containsKey(parentBlock)) {
+					                blockValues.put(parentBlock, new HashMap<>());
+					            }
+				
+				            // Store the selected value in blockValues
+				            blockValues.get(parentBlock).put(txt.getTag().toString(), selectedValue);
+				        }
+			    });
+		
+		    builder.setNegativeButton("Cancel", null);
+		    builder.show();
+	}
+	{
+	}
+	
+	
+	public void _helper() {
+	}
+	private String removeFileExtension(String fileName) {
+		    return fileName.replaceAll("\\.(png|jpg|jpeg|webp|bmp|gif|svg|ico|tiff|tif)$", "");
+	}
+	private List<String> getDrawableFiles() {
+		    List<String> files = new ArrayList<>();
+		    //select drawable path
+		    String folderPath = "/storage/emulated/0/custom_folder/";
+		
+		    File dir = new File(folderPath);
+		    if (dir.exists() && dir.isDirectory()) {
+			        File[] fileList = dir.listFiles((dir1, name) -> 
+			            name.matches(".*\\.(png|jpg|jpeg|webp|bmp|gif|svg|ico|tiff|tif)$")
+			        );
+			
+			        if (fileList != null) {
+				            for (File file : fileList) {
+					                files.add(file.getAbsolutePath());
+					            }
+				        }
+			    }
+		
+		    return files;
+	}
+	private String removeFontExtension(String fileName) {
+		    return fileName.replaceAll("\\.(ttf|otf|woff|woff2|eot)$", "");
+	}
+	private List<String> getFontFiles() {
+		    List<String> files = new ArrayList<>();
+		    // Select font path
+		    String folderPath = "/storage/emulated/0/custom_folder/";
+		
+		    File dir = new File(folderPath);
+		    if (dir.exists() && dir.isDirectory()) {
+			        File[] fileList = dir.listFiles((dir1, name) -> 
+			            name.matches(".*\\.(ttf|otf|woff|woff2|eot)$")
+			        );
+			
+			        if (fileList != null) {
+				            for (File file : fileList) {
+					                files.add(file.getAbsolutePath());
+					            }
+				        }
+			    }
+		
+		    return files;
+	}
+	// Extract all child blocks recursively
+	private List<Map<String, String>> getChildBlocks(ViewGroup parent) {
+		    List<Map<String, String>> childBlocks = new ArrayList<>();
+		
+		    for (int i = 0; i < parent.getChildCount(); i++) {
+			        View child = parent.getChildAt(i);
+			        if (child instanceof regular || child instanceof if_block) {
+				            Map<String, String> childData = new HashMap<>();
+				            childData.put("type", child instanceof regular ? "regular" : "if_block");
+				            childData.put("content", getBlockContent(child));
+				            childData.put("code", child.getTag() != null ? child.getTag().toString() : "");
+				
+				            if (blockValues.containsKey(child)) {
+					                childData.put("placeholders", gson.toJson(blockValues.get(child)));
+					            }
+				
+				            if (child instanceof ViewGroup) {
+					                childData.put("children", gson.toJson(getChildBlocks((ViewGroup) child)));
+					            }
+				
+				            childBlocks.add(childData);
+				        }
+			    }
+		    return childBlocks;
+	}
+	/**
+ * Saves block data to a JSON file while preserving all other event data.
+ *
+ * @param eventName The name of the event (e.g., "onCreate").
+ * @param newBlocks A list of new block data to be saved.
+ */
+	private void saveBlocksToFile(@NonNull String eventName, @NonNull List<Map<String, String>> newBlocks) {
+		    try {
+			        File dir = new File(Environment.getExternalStorageDirectory(), "app");
+			        if (!dir.exists() && !dir.mkdirs()) {
+				            showToast("Failed to create directory");
+				            return;
+				        }
+			
+			        File file = new File(dir, "blocks.json");
+			        Map<String, List<Map<String, String>>> allEventsData = new HashMap<>();
+			
+			        // ✅ Load existing event data but do NOT load current event's old data
+			        if (file.exists()) {
+				            try (FileReader reader = new FileReader(file)) {
+					                Type type = new TypeToken<Map<String, List<Map<String, String>>>>() {}.getType();
+					                allEventsData = gson.fromJson(reader, type);
+					                if (allEventsData == null) allEventsData = new HashMap<>();
+					            }
+				        }
+			
+			        // ✅ Directly replace only the current event's data
+			        allEventsData.put(eventName, newBlocks);
+			
+			        // ✅ Save updated data to file
+			        try (FileWriter writer = new FileWriter(file, false)) {
+				            gson.toJson(allEventsData, writer);
+				            showToast("Blocks saved successfully!");
+				        }
+			    } catch (Exception e) {
+			        Log.e("SaveError", "Failed to save blocks", e);
+			    }
+	}
+	
+	private void replacePlaceholderText(ViewGroup parentBlock, String placeholder, String value) {
+		    for (int i = 0; i < parentBlock.getChildCount(); i++) {
+			        View child = parentBlock.getChildAt(i);
+			
+			        if (child instanceof TextView && placeholder.equals(child.getTag())) {
+				            ((TextView) child).setText(value); // ✅ Placeholder ko actual value se replace karo
+				        } else if (child instanceof ViewGroup) {
+				            replacePlaceholderText((ViewGroup) child, placeholder, value); // ✅ Nested views ke liye recursion
+				        }
+			    }
+	}
+	private void restoreBlockColor(@NonNull View block, @Nullable String colorCode) {
+		    try {
+			        if (colorCode != null && !colorCode.isEmpty()) {
+				            int color = Color.parseColor("#" + colorCode);
+				            if (block instanceof regular) {
+					                block.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					            } else if (block instanceof if_block) {
+					                if_block ifb = (if_block) block;
+					                ifb.top.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					                ifb.center.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					                ifb.bottom.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					                ifb.middle.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					                ifb.center2.getBackground().setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+					            }
+				        }
+			    } catch (Exception e) {
+			        Log.e("ColorError", "Error applying color", e);
+			    }
+	}
+	{
+	}
+	
+	
+	public void _implementation() {
+	} 
+	private void saveLogic() {
+		    List<Map<String, String>> storedBlocks = new ArrayList<>();
+		
+		    for (int i = 0; i < main.getChildCount(); i++) {
+			        View child = main.getChildAt(i);
+			        if (child instanceof regular) {
+				            Map<String, String> blockData = new HashMap<>();
+				            blockData.put("type", "regular");
+				
+				            StringBuilder content = new StringBuilder();
+				            StringBuilder values = new StringBuilder();
+				
+				            for (int j = 0; j < ((LinearLayout) child).getChildCount(); j++) {
+					                View subChild = ((LinearLayout) child).getChildAt(j);
+					
+					                if (subChild.getContentDescription() != null) {
+						                    content.append(subChild.getContentDescription().toString()).append(" ");
+						                    values.append(((TextView) subChild).getText().toString()).append(";");
+						                } else if (subChild instanceof TextView) {
+						                    content.append(((TextView) subChild).getText().toString()).append(" ");
+						                }
+					            }
+				
+				            String blockCode = getBlockContent(child);
+				            String cleanContent = content.toString().replaceAll("\\s+", " ").trim();
+				            blockData.put("code", child.getTag() != null ? child.getTag().toString() : "");
+				            blockData.put("blockCode", blockCode);
+				            blockData.put("content", cleanContent);
+				            blockData.put("values", values.toString().trim());
+				
+				            // ✅ Safe width-height measurement
+				            int DEFAULT_WIDTH = 300;
+				            int DEFAULT_HEIGHT = 100;
+				
+				            child.measure(
+				                View.MeasureSpec.makeMeasureSpec(main.getWidth(), View.MeasureSpec.AT_MOST),
+				                View.MeasureSpec.makeMeasureSpec(main.getHeight(), View.MeasureSpec.AT_MOST)
+				            );
+				
+				            int width = child.getMeasuredWidth() > 0 ? child.getMeasuredWidth() : DEFAULT_WIDTH;
+				            int height = child.getMeasuredHeight() > 0 ? child.getMeasuredHeight() : DEFAULT_HEIGHT;
+				
+				            blockData.put("width", String.valueOf(width));
+				            blockData.put("height", String.valueOf(height));
+				
+				            // ✅ Background color copy
+				            try {
+					                Drawable background = child.getBackground();
+					                if (background instanceof ColorDrawable) {
+						                    int color = ((ColorDrawable) background).getColor();
+						                    blockData.put("colour", String.format("#%06X", (0xFFFFFF & color)));
+						                } else {
+						                    blockData.put("colour", "#FB8C00"); // Default color
+						                }
+					            } catch (Exception e) {
+					                showMessage(e.toString());
+					            }
+				
+				            storedBlocks.add(blockData);
+				        }
+			    }
+		
+		    Map<String, Object> dataMap = new HashMap<>();
+		    dataMap.put(EVENT_NAME, storedBlocks);
+		    StorageUtils.saveData(dataMap);
+	}
+	private void loadLogic() {
+		    Map<String, Object> dataMap = StorageUtils.loadData();
+		    if (dataMap.containsKey(EVENT_NAME)) {
+			        List<Map<String, String>> storedBlocks = (List<Map<String, String>>) dataMap.get(EVENT_NAME);
+			        main.removeAllViews(); // ✅ Remove previous views to prevent duplicates
+			
+			        for (Map<String, String> block : storedBlocks) {
+				            String content = block.getOrDefault("content", "");
+				            String blockCode = block.getOrDefault("code", "");
+				            int width = Integer.parseInt(block.getOrDefault("width", "300"));
+				            int height = Integer.parseInt(block.getOrDefault("height", "100"));
+				            String colorCode = block.getOrDefault("colour", "#FB8C00"); // Default color
+				
+				            if ("regular".equals(block.get("type"))) {
+					                regular r = new regular(MainActivity.this);
+					                
+					                int blockId = View.generateViewId();
+					                r.setId(blockId);
+					                
+					                r.setTag(blockCode);
+					
+					                // ✅ Restore placeholders from saved data
+					                if (!blockValues.containsKey(r)) {
+						                    blockValues.put(r, new HashMap<>());
+						                }
+					
+					                for (Map.Entry<String, String> entry : block.entrySet()) {
+						                    if (entry.getKey().startsWith("%")) {
+							                        blockValues.get(r).put(entry.getKey(), entry.getValue());
+							                    }
+						                }
+					
+					                // ✅ Ensure correct layout params
+					                r.setLayoutParams(new LinearLayout.LayoutParams((int) (android.widget.LinearLayout.LayoutParams.WRAP_CONTENT),(int) (android.widget.LinearLayout.LayoutParams.WRAP_CONTENT)));
+					
+					                // ✅ Restore background color
+					                if (r.getBackground() instanceof ColorDrawable) {
+						                    r.getBackground().clearColorFilter();
+						                }
+					                r.getBackground().setColorFilter(Color.parseColor(colorCode), PorterDuff.Mode.MULTIPLY);
+					
+					                // ✅ Remove old views before adding new ones
+					                if (r.getChildCount() > 0) {
+						                    r.removeAllViews();
+						                }
+					
+					                _addViewsTo(r, content, blockCode, block.get("values"));
+					                blockContentMap.put(blockId, block);
+					
+					                main.addView(r); // ✅ Finally, add the restored block to the main layout
+					            }
+				        }
+			    }
+	}
 	{
 	}
 	

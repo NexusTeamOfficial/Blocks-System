@@ -33,6 +33,7 @@ import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.TextView;
 import androidx.annotation.*;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -55,9 +56,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;;
-
-
+import java.util.Map;;
 
 public class AddblockActivity extends AppCompatActivity {
 	
@@ -75,6 +74,7 @@ public class AddblockActivity extends AppCompatActivity {
 	private LinearLayout linear2;
 	private ListView listview1;
 	private LinearLayout linear1;
+	private TextView textview1;
 	private Button Imports;
 	private Button exports;
 	private Button button1;
@@ -111,6 +111,7 @@ public class AddblockActivity extends AppCompatActivity {
 		linear2 = findViewById(R.id.linear2);
 		listview1 = findViewById(R.id.listview1);
 		linear1 = findViewById(R.id.linear1);
+		textview1 = findViewById(R.id.textview1);
 		Imports = findViewById(R.id.Imports);
 		exports = findViewById(R.id.exports);
 		button1 = findViewById(R.id.button1);
@@ -185,7 +186,7 @@ public class AddblockActivity extends AppCompatActivity {
 	private void initializeLogic() {
 		if (!s.contains("firstlaunch")) {
 			s.edit().putString("firstlaunch", "false").commit();
-			s.edit().putString("data", "{\n  \"regular\": [\n    {\"name\": \"Heading\", \"content\": \"Blocks\", \"colour\": \"FB8C00\", \"type\": \"heading\", \"code\": \"Heading: %1$s\"},\n    {\"name\": \"set boolean\", \"content\": \"set boolean to %v.b\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set boolean to %1$s\"},\n    {\"name\": \"set number\", \"content\": \"set number to %e.n\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set number to %1$s\"},\n    {\"name\": \"num +1\", \"content\": \"Number %e.n increase 1\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"increase number %1$s by 1\"},\n    {\"name\": \"num -1\", \"content\": \"Number %e.n decrease 1\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"decrease number %1$s by 1\"},\n    {\"name\": \"set string\", \"content\": \"set string to %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set string to %1$s\"},\n    {\"name\": \"append string\", \"content\": \"append %e.s to %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"append %1$s to %2$s\"},\n    {\"name\": \"get length\", \"content\": \"length of %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"get length of %1$s\"},\n    {\"name\": \"contains\", \"content\": \"%e.s contains %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"%1$s contains %2$s\"},\n    {\"name\": \"set list\", \"content\": \"set list %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set list to %1$s\"},\n    {\"name\": \"add to list\", \"content\": \"add %e.v to %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"add %1$s to list %2$s\"},\n    {\"name\": \"remove from list\", \"content\": \"remove %e.v from %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"remove %1$s from list %2$s\"},\n    {\"name\": \"clear list\", \"content\": \"clear %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"clear list %1$s\"},\n    {\"name\": \"get from list\", \"content\": \"get item %e.n from %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"get item %1$s from list %2$s\"}\n  ],\n  \"if\": [\n    {\"name\": \"Heading\", \"content\": \"Control\", \"colour\": \"FB8C00\", \"type\": \"heading\", \"code\": \"Control Block: %1$s\"},\n    {\"name\": \"repeat\", \"content\": \"repeat %e.n\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s times\"},\n    {\"name\": \"repeat custom+\", \"content\": \"repeat %e.n %e.s ++\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s %2$s incremented\"},\n    {\"name\": \"repeat custom-\", \"content\": \"repeat %e.s %e.n --\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s %2$s decremented\"},\n    {\"name\": \"forever\", \"content\": \"forever\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"forever\"},\n    {\"name\": \"if (true)\", \"content\": \"if %v.b then\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"if %1$s then\"},\n    {\"name\": \"if (true) else\", \"content\": \"if %v.b then\", \"content2\": \"else\", \"colour\": \"FB8C00\", \"type\": \"if.e\", \"code\": \"if %1$s then else\"},\n    {\"name\": \"while\", \"content\": \"while %v.b\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"while %1$s\"},\n    {\"name\": \"do while\", \"content\": \"do %e.s while %v.b\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"do %1$s while %2$s\"},\n    {\"name\": \"break\", \"content\": \"break\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"break\"},\n    {\"name\": \"continue\", \"content\": \"continue\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"continue\"}\n  ]\n}\n").commit();
+			s.edit().putString("data", "{\n  \"regular\": [\n    {\"name\": \"Heading\", \"content\": \"Blocks\", \"colour\": \"FB8C00\", \"type\": \"heading\", \"code\": \"Heading: %1$s\"},\n    {\"name\": \"set boolean\", \"content\": \"set boolean to %v.b\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set boolean to %1$s\"},\n    {\"name\": \"set number\", \"content\": \"set number to %e.n\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"int i = %1$s;\"},\n    {\"name\": \"num +1\", \"content\": \"Number %e.n increase 1\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"increase number %1$s by 1\"},\n    {\"name\": \"num -1\", \"content\": \"Number %e.n decrease 1\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"decrease number %1$s by 1\"},\n    {\"name\": \"set string\", \"content\": \"set string to %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set string to %1$s\"},\n    {\"name\": \"append string\", \"content\": \"append %e.s to %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"append %1$s to %2$s\"},\n    {\"name\": \"get length\", \"content\": \"length of %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"get length of %1$s\"},\n    {\"name\": \"contains\", \"content\": \"%e.s contains %e.s\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"%1$s contains %2$s\"},\n    {\"name\": \"set list\", \"content\": \"set list %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"set list to %1$s\"},\n    {\"name\": \"add to list\", \"content\": \"add %e.v to %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"add %1$s to list %2$s\"},\n    {\"name\": \"remove from list\", \"content\": \"remove %e.v from %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"remove %1$s from list %2$s\"},\n    {\"name\": \"clear list\", \"content\": \"clear %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"clear list %1$s\"},\n    {\"name\": \"get from list\", \"content\": \"get item %e.n from %v.l\", \"colour\": \"FB8C00\", \"type\": \"regular\", \"code\": \"get item %1$s from list %2$s\"}\n  ],\n  \"if\": [\n    {\"name\": \"Heading\", \"content\": \"Control\", \"colour\": \"FB8C00\", \"type\": \"heading\", \"code\": \"Control Block: %1$s\"},\n    {\"name\": \"repeat\", \"content\": \"repeat %e.n\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s times\"},\n    {\"name\": \"repeat custom+\", \"content\": \"repeat %e.n %e.s ++\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s %2$s incremented\"},\n    {\"name\": \"repeat custom-\", \"content\": \"repeat %e.s %e.n --\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"repeat %1$s %2$s decremented\"},\n    {\"name\": \"forever\", \"content\": \"forever\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"forever\"},\n    {\"name\": \"if (true)\", \"content\": \"if %v.b then\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"if %1$s then\"},\n    {\"name\": \"if (true) else\", \"content\": \"if %v.b then\", \"content2\": \"else\", \"colour\": \"FB8C00\", \"type\": \"if.e\", \"code\": \"if %1$s then else\"},\n    {\"name\": \"while\", \"content\": \"while %v.b\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"while %1$s\"},\n    {\"name\": \"do while\", \"content\": \"do %e.s while %v.b\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"do %1$s while %2$s\"},\n    {\"name\": \"break\", \"content\": \"break\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"break\"},\n    {\"name\": \"continue\", \"content\": \"continue\", \"colour\": \"FB8C00\", \"type\": \"if\", \"code\": \"continue\"}\n  ]\n}\n").commit();
 		}
 		if (s.contains("data")) {
 			dataMap = gson.fromJson(s.getString("data", ""), type);
@@ -430,4 +431,4 @@ public class AddblockActivity extends AppCompatActivity {
 	public int getDisplayHeightPixels() {
 		return getResources().getDisplayMetrics().heightPixels;
 	}
-}
+}
