@@ -34,9 +34,7 @@
 | Number Block| ⬜ |
 | Boolean Block| ⬜ |
 | String Block| ⬜ |
-| Save Blocks But After save and load block input removed| ✅ |
-| Block Input Save| ⬜ |
-| Not block input save but block code also saved| ⬜ |
+| Added Save Logic, Load Logic| ✅ |
 ---
 
 ## 🛠️ How It Works
