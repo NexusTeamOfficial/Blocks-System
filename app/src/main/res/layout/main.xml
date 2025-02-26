@@ -20,12 +20,14 @@
 	<LinearLayout
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
+		android:background="#FFFFFF"
 		android:orientation="vertical"
 		app:layout_behavior="@string/appbar_scrolling_view_behavior">
 		<LinearLayout
 			android:id="@+id/linear5"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:background="#FFFFFF"
 			android:orientation="horizontal">
 			<LinearLayout
 				android:id="@+id/linear1"
@@ -58,19 +60,27 @@
 				android:gravity="right"
 				android:orientation="horizontal">
 				<Button
-					android:id="@+id/button2"
-					android:layout_width="40dp"
+					android:id="@+id/save"
+					android:layout_width="45dp"
 					android:layout_height="wrap_content"
 					android:padding="8dp"
 					android:text="Save"
 					android:textSize="12sp"
 					android:textColor="#000000" />
 				<Button
-					android:id="@+id/button1"
-					android:layout_width="40dp"
+					android:id="@+id/sourceCode"
+					android:layout_width="50dp"
 					android:layout_height="wrap_content"
 					android:padding="8dp"
 					android:text="Show Source code"
+					android:textSize="12sp"
+					android:textColor="#000000" />
+				<Button
+					android:id="@+id/load"
+					android:layout_width="45dp"
+					android:layout_height="wrap_content"
+					android:padding="8dp"
+					android:text="Load"
 					android:textSize="12sp"
 					android:textColor="#000000" />
 				<ImageView
@@ -79,20 +89,13 @@
 					android:layout_height="30dp"
 					android:src="@drawable/bin"
 					android:scaleType="center" />
-				<Button
-					android:id="@+id/button3"
-					android:layout_width="40dp"
-					android:layout_height="wrap_content"
-					android:padding="8dp"
-					android:text="Load"
-					android:textSize="12sp"
-					android:textColor="#000000" />
 			</LinearLayout>
 		</LinearLayout>
 		<LinearLayout
 			android:id="@+id/linear2"
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
+			android:background="#FFFFFF"
 			android:orientation="vertical"
 			android:layout_weight="1">
 			<ScrollView
@@ -124,22 +127,36 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:layout_margin="16dp"
-			android:layout_gravity="right|bottom" />
+			android:background="#FFFFFF"
+			android:layout_gravity="right|bottom"
+			app:srcCompat="@drawable/block_96_blue" />
 		<LinearLayout
 			android:id="@+id/linear8"
 			android:layout_width="match_parent"
 			android:layout_height="250dp"
+			android:background="#FFFFFF"
 			android:orientation="horizontal">
 			<ScrollView
 				android:id="@+id/vscroll3"
-				android:layout_width="wrap_content"
+				android:layout_width="260dp"
 				android:layout_height="match_parent">
 				<LinearLayout
-					android:id="@+id/blockarea"
-					android:layout_width="260dp"
+					android:id="@+id/linear14"
+					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
-					android:padding="8dp"
-					android:orientation="vertical" />
+					android:orientation="vertical">
+					<HorizontalScrollView
+						android:id="@+id/hscroll3"
+						android:layout_width="match_parent"
+						android:layout_height="match_parent">
+						<LinearLayout
+							android:id="@+id/blockarea"
+							android:layout_width="wrap_content"
+							android:layout_height="match_parent"
+							android:padding="8dp"
+							android:orientation="vertical" />
+					</HorizontalScrollView>
+				</LinearLayout>
 			</ScrollView>
 			<LinearLayout
 				android:id="@+id/linear10"
@@ -154,5 +171,15 @@
 					android:choiceMode="none" />
 			</LinearLayout>
 		</LinearLayout>
+		<TextView
+			android:id="@+id/copyRightFinal"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:background="#FFFFFF"
+			android:gravity="center_horizontal|center_vertical"
+			android:text="Modified By NexusTeam &amp; SmartIndiaGaming Individual. 2025™"
+			android:textSize="10sp"
+			android:textColor="#9E9E9E"
+			android:layout_gravity="center_horizontal|center_vertical" />
 	</LinearLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
